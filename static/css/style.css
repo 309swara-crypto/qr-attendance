@@ -1,0 +1,143 @@
+/* Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#FFF9C4,#FFD54F,#FFC107);
+}
+
+/* Login Card */
+.login-container{
+    width:380px;
+    background:rgba(255,255,255,0.95);
+    padding:40px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+    text-align:center;
+    transition:0.3s;
+}
+
+.login-container:hover{
+    transform:translateY(-5px);
+}
+
+/* Heading */
+h1{
+    color:#222;
+    font-size:30px;
+    margin-bottom:8px;
+}
+
+p{
+    color:#666;
+    margin-bottom:25px;
+}
+
+/* Input Fields */
+input{
+    width:100%;
+    padding:14px;
+    margin:12px 0;
+    border:2px solid #FFD54F;
+    border-radius:10px;
+    outline:none;
+    font-size:15px;
+    transition:0.3s;
+}
+
+input:focus{
+    border-color:#FFB300;
+    box-shadow:0 0 8px rgba(255,193,7,.5);
+}
+
+/* Login Button */
+button{
+    width:100%;
+    padding:14px;
+    margin-top:20px;
+    background:#FFC107;
+    color:#222;
+    font-size:18px;
+    font-weight:bold;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+button:hover{
+    background:#FFB300;
+    transform:scale(1.03);
+}
+
+/* Forgot Password */
+a{
+    display:block;
+    margin-top:18px;
+    color:#555;
+    text-decoration:none;
+}
+
+a:hover{
+    color:#FF9800;
+}
+
+/* Footer */
+.footer{
+    margin-top:25px;
+    color:#777;
+    font-size:13px;
+}
+/* Dashboard */
+
+.dashboard{
+    width:90%;
+    margin:auto;
+    text-align:center;
+    padding:30px;
+}
+
+.dashboard h1{
+    color:#333;
+}
+
+.dashboard h2{
+    color:#ff9800;
+    margin-bottom:30px;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.15);
+    transition:0.3s;
+    cursor:pointer;
+}
+
+.card:hover{
+    transform:translateY(-8px);
+    background:#FFD54F;
+}
+
+.card a{
+    text-decoration:none;
+    color:black;
+    font-weight:bold;
+}

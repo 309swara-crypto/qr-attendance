@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Student Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <h1>🎓 QR Attendance System</h1>
+
+    <h2>Welcome, Student 👩‍🎓</h2>
+
+    <div class="cards">
+
+        <!-- Scan QR -->
+        <a href="{{ url_for('scan_qr') }}" class="card">
+            📷<br><br>
+            Scan QR
+        </a>
+
+        <!-- Attendance History -->
+        <a href="#" class="card">
+            📊<br><br>
+            My Attendance
+        </a>
+
+        <!-- Logout -->
+        <a href="{{ url_for('logout') }}" class="card">
+            🚪<br><br>
+            Logout
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+</html>

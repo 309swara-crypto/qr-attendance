@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <h1>🎓 QR Attendance System</h1>
+    <h2>Welcome, Teacher 👩‍🏫</h2>
+
+    <div class="cards">
+
+        <!-- Add Student -->
+        <a href="{{ url_for('add_student') }}" class="card">
+            ➕<br><br>
+            Add Student
+        </a>
+
+        <!-- Student List -->
+        <a href="{{ url_for('student_list') }}" class="card">
+            📋<br><br>
+            Student List
+        </a>
+
+        <!-- Create Lecture -->
+        <a href="{{ url_for('create_lecture') }}" class="card">
+            🗓️<br><br>
+            Create Lecture
+        </a>
+
+        <!-- Attendance Report -->
+        <a href="#" class="card">
+            📊<br><br>
+            Attendance Report
+        </a>
+
+        <!-- Logout -->
+        <a href="{{ url_for('logout') }}" class="card">
+            🚪<br><br>
+            Logout
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+</html>

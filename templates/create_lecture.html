@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Create Lecture</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Create Lecture</h1>
+
+    <form action="{{ url_for('generate_qr') }}" method="POST">
+
+        <label>Subject</label>
+        <input type="text" name="subject" required>
+
+        <label>Class</label>
+        <input type="text" name="class" required>
+
+        <label>Division</label>
+
+        <select name="division">
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+        </select>
+
+        <br><br>
+
+        <button type="submit">
+            🚀 Start Attendance
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

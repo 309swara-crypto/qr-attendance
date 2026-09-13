@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Generate QR</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Attendance QR</h1>
+
+    <p><b>Subject:</b> {{ subject }}</p>
+    <p><b>Class:</b> {{ class_name }}</p>
+    <p><b>Division:</b> {{ division }}</p>
+
+    <img src="{{ url_for('static', filename='qr_codes/' + qr_image) }}"
+         width="300">
+
+    <h2>This QR is valid for 2 minutes.</h2>
+
+    <a href="{{ url_for('teacher_dashboard') }}">
+        Back to Dashboard
+    </a>
+
+</div>
+
+</body>
+</html>
