@@ -6,7 +6,6 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 
@@ -16,6 +15,7 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 # ============================================================
 
 app = Flask(__name__)
+oauth = OAuth(app)
 google = oauth.register(
     name='google',
     client_id=GOOGLE_CLIENT_ID,
