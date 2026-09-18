@@ -1,148 +1,975 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from authlib.integrations.flask_client import OAuth
+import sqlite3
+import segno
 import os
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+try:
+    import segno
+except:
+    segno = None
+import sqlite3
 
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+# ---------------- DB HELPER - FIXES DATA DELETION ----------------
 def get_db():
     if DATABASE_URL:
         import psycopg2
         conn = psycopg2.connect(DATABASE_URL)
         return conn, True
     else:
-        import sqlite3
         conn = sqlite3.connect('attendance.db', check_same_thread=False)
-        conn.row_factory = sqlite3.Row
         return conn, False
 
 def init_db():
     conn, is_pg = get_db()
     cur = conn.cursor()
     if is_pg:
-        cur.execute("CREATE TABLE IF NOT EXISTS students (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT, name TEXT, roll_no TEXT)")
-        cur.execute("CREATE TABLE IF NOT EXISTS teachers (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT, name TEXT)")
-        cur.execute("CREATE TABLE IF NOT EXISTS attendance (id SERIAL PRIMARY KEY, name TEXT, roll_no TEXT, email TEXT, timestamp TEXT, date TEXT)")
+        cur.execute("""CREATE TABLE IF NOT EXISTS students (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT, name TEXT, roll_no TEXT)""")
+        cur.execute("""CREATE TABLE IF NOT EXISTS teachers (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT, name TEXT)""")
+        cur.execute("""CREATE TABLE IF NOT EXISTS attendance (id SERIAL PRIMARY KEY, name TEXT, roll_no TEXT, email TEXT, timestamp TIMESTAMP, date TEXT, student_id TEXT)""")
     else:
-        cur.execute("CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, name TEXT, roll_no TEXT)")
-        cur.execute("CREATE TABLE IF NOT EXISTS teachers (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, name TEXT)")
-        cur.execute("CREATE TABLE IF NOT EXISTS attendance (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, roll_no TEXT, email TEXT, timestamp TEXT, date TEXT)")
+        cur.execute("""CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, name TEXT, roll_no TEXT)""")
+        cur.execute("""CREATE TABLE IF NOT EXISTS teachers (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT, name TEXT)""")
+        cur.execute("""CREATE TABLE IF NOT EXISTS attendance (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, roll_no TEXT, email TEXT, timestamp TEXT, date TEXT, student_id TEXT)""")
     conn.commit()
     conn.close()
 
+# ============================================================
+# FLASK APP
+# ============================================================
+
+# ---------------- FLASK APP ----------------
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "attendance_secret_123")
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-
+app.secret_key = os.environ.get("SECRET_KEY", "attendance123")
 oauth = OAuth(app)
-google = None
-if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
-    google = oauth.register(name='google', client_id=GOOGLE_CLIENT_ID, client_secret=GOOGLE_CLIENT_SECRET, server_metadata_url='https://accounts.google.com/.well-known/openid-configuration', client_kwargs={'scope': 'openid email profile'})
+@@ -22,901 +47,32 @@
+client_id=GOOGLE_CLIENT_ID,
+client_secret=GOOGLE_CLIENT_SECRET,
+server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)  
 
+DATABASE = "database/database.db"
+
+
+# ============================================================
+# DATABASE CONNECTION
+# ============================================================
+
+def get_db():
+    os.makedirs("database", exist_ok=True)
+
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+
+    return conn
+
+
+# ============================================================
+# CREATE DATABASE TABLES
+# ============================================================
+
+def create_tables():
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # ---------------- STUDENTS ---------------- #
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS students (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            name TEXT NOT NULL,
+
+            roll TEXT UNIQUE NOT NULL,
+
+            class TEXT NOT NULL,
+
+            email TEXT,
+
+            phone TEXT,
+
+            username TEXT UNIQUE,
+
+            password TEXT
+        )
+    """)
+
+    # ---------------- ATTENDANCE ---------------- #
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS attendance (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            student TEXT NOT NULL,
+
+            subject TEXT NOT NULL,
+
+            class_name TEXT,
+
+            division TEXT,
+
+            date TEXT,
+
+            time TEXT,
+
+            status TEXT
+        )
+    """)
+
+    # ---------------- QR CODES ---------------- #
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS qr_codes (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            qr_token TEXT UNIQUE NOT NULL,
+
+            subject TEXT NOT NULL,
+
+            class_name TEXT,
+
+            division TEXT,
+
+            created_at TEXT,
+
+            expires_at TEXT
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+# ============================================================
+# HOME / LOGIN PAGE
+# ============================================================
+
+@app.route("/")
+def home():
+
+    # If already logged in, send user to dashboard
+
+    if "user" in session:
+
+        if session.get("role") == "teacher":
+            return redirect(url_for("teacher_dashboard"))
+
+        if session.get("role") == "student":
+            return redirect(url_for("student_dashboard"))
+
+    return render_template("login.html")
+
+# ==========================================
+# LOGIN
+# ==========================================
+
+@app.route("/login", methods=["POST"])
+def login():
+
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+    role = request.form.get("role", "")
+
+    # ==========================================
+    # TEACHER LOGIN
+    # ==========================================
+
+    if role == "teacher":
+
+        # Your existing teacher username/password
+        if username == "teacher" and password == "1234":
+
+            session["user"] = username
+            session["name"] = "Teacher"
+            session["role"] = "teacher"
+
+            return redirect(url_for("teacher_dashboard"))
+
+        return "Invalid teacher username or password"
+
+    # ==========================================
+    # STUDENT LOGIN
+    # ==========================================
+
+    if role == "student":
+
+        conn = get_db()
+        student = conn.execute(
+            "SELECT * FROM students WHERE username = ?",
+            (username,)
+        ).fetchone()
+        conn.close()
+
+        if student and check_password_hash(student["password"], password):
+
+            session["user"] = username
+            session["name"] = student["name"]
+            session["role"] = "student"
+
+            return redirect(url_for("student_dashboard"))
+
+        return "Invalid student username or password"
+
+    return "Please select a valid return"
+    
+
+
+# ============================================================
+# TEACHER DASHBOARD
+# ============================================================
+
+@app.route("/teacher_dashboard")
+def teacher_dashboard():
+
+    if session.get("role") != "teacher":
+
+        return redirect(url_for("home"))
+
+    return render_template(
+        "teacher_dashboard.html"
+    )
+
+
+# ============================================================
+# STUDENT DASHBOARD
+# ============================================================
+
+@app.route("/student_dashboard")
+def student_dashboard():
+
+    if session.get("role") != "student":
+
+        return redirect(url_for("home"))
+
+    return render_template(
+        "student_dashboard.html"
+    )
+
+
+# ============================================================
+# ADD STUDENT PAGE
+# ============================================================
+
+@app.route("/add_student")
+def add_student():
+
+    if session.get("role") != "teacher":
+
+        return redirect(url_for("home"))
+
+    return render_template(
+        "add_student.html"
+    )
+
+
+# ============================================================
+# SAVE STUDENT
+# ============================================================
+
+@app.route("/save_student", methods=["POST"])
+def save_student():
+
+    if session.get("role") != "teacher":
+
+        return redirect(url_for("home"))
+
+    name = request.form.get("name", "").strip()
+    roll = request.form.get("roll", "").strip()
+    class_name = request.form.get("class", "").strip()
+    email = request.form.get("email", "").strip()
+    phone = request.form.get("phone", "").strip()
+    password = request.form.get("password", "").strip()
+
+    # Validate
+
+    if not name or not roll or not class_name or not password:
+
+        return """
+        <h2>Please fill all required fields.</h2>
+        <a href="/add_student">Back</a>
+        """
+
+    # Username = Roll Number
+
+    username = roll
+
+    # Hash password
+
+    password_hash = generate_password_hash(
+        password
+    )
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    try:
+
+        cursor.execute("""
+            INSERT INTO students
+            (
+                name,
+                roll,
+                class,
+                email,
+                phone,
+                username,
+                password
+            )
+
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            name,
+            roll,
+            class_name,
+            email,
+            phone,
+            username,
+            password,
+
+        ))
+
+        conn.commit()
+
+    except sqlite3.IntegrityError:
+
+        conn.close()
+
+        return """
+        <h2>Roll Number or Username already exists!</h2>
+        <a href="/add_student">Back to Add Student</a>
+        """
+
+    conn.close()
+
+    return redirect(
+        url_for("student_list")
+    )
+
+
+# ============================================================
+# STUDENT LIST
+# ============================================================
+
+@app.route("/student_list")
+def student_list():
+
+    if session.get("role") != "teacher":
+
+        return redirect(url_for("home"))
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            name,
+            roll,
+            class,
+            email,
+            phone,
+            username
+        FROM students
+        ORDER BY id DESC
+    """)
+
+    students = cursor.fetchall()
+
+    conn.close()
+
+    return render_template(
+        "student_list.html",
+        students=students
+    )
+
+
+# ============================================================
+# DELETE STUDENT
+# ============================================================
+
+@app.route("/delete_student/<int:student_id>")
+def delete_student(student_id):
+
+    if session.get("role") != "teacher":
+
+        return redirect(url_for("home"))
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "DELETE FROM students WHERE id = ?",
+        (student_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return redirect(
+        url_for("student_list")
+    )
+
+
+# ============================================================
+# CREATE LECTURE PAGE
+# ============================================================
+
+@app.route("/create_lecture")
+def create_lecture():
+
+    if session.get("role") != "teacher":
+
+        return redirect(url_for("home"))
+
+    return render_template(
+        "create_lecture.html"
+    )
+
+
+# ============================================================
+# GENERATE QR CODE
+# ============================================================
+    client_kwargs={'scope': 'openid email profile'}
+)
+
+@app.route("/generate_qr", methods=["POST"])
+def generate_qr():
 init_db()
 
-def query_db(query, args=(), one=False, commit=False):
-    conn, is_pg = get_db()
-    cur = conn.cursor()
-    q = query.replace('?', '%s') if is_pg else query
-    cur.execute(q, args)
-    if commit:
-        conn.commit()
-        conn.close()
-        return None
-    result = cur.fetchone() if one else cur.fetchall()
+    if session.get("role") != "teacher":
+# ... KEEP ALL YOUR EXISTING ROUTES BELOW THIS ...
+# IMPORTANT: For attendance marking, use this logic (NO duplicate block):
+
+        return redirect(url_for("home"))
+
+    subject = request.form.get(
+        "subject",
+        ""
+    ).strip()
+
+    class_name = request.form.get(
+        "class",
+        ""
+    ).strip()
+
+    division = request.form.get(
+        "division",
+        ""
+    ).strip()
+
+    if not subject:
+
+        return """
+        <h2>Subject is required.</h2>
+        <a href="/create_lecture">Back</a>
+        """
+
+    # --------------------------------------------------------
+    # Generate unique QR token
+    # --------------------------------------------------------
+
+    token = str(uuid.uuid4())
+
+    created_at = datetime.now()
+
+    # QR valid for 2 minutes
+
+    expires_at = created_at + timedelta(
+        minutes=2
+    )
+
+    # --------------------------------------------------------
+    # Save QR information in database
+    # --------------------------------------------------------
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO qr_codes
+        (
+            qr_token,
+            subject,
+            class_name,
+            division,
+            created_at,
+            expires_at
+        )
+
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        token,
+        subject,
+        class_name,
+        division,
+        created_at.strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        expires_at.strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+    ))
+
+    conn.commit()
     conn.close()
-    return result
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+    # --------------------------------------------------------
+    # QR data
+    # --------------------------------------------------------
 
-@app.route('/login', methods=['GET','POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username'); password = request.form.get('password'); role = request.form.get('role')
-        if not role:
-            flash("Select role"); return render_template('login.html')
-        table = 'teachers' if role == 'teacher' else 'students'
-        user = query_db(f"SELECT * FROM {table} WHERE username =?", (username,), one=True)
-        if user and check_password_hash(user[2], password):
-            session['user']=user[1]; session['name']=user[3]; session['role']=role
-            if role=='student': session['roll_no']=user[4] if len(user)>4 else ''
-            return redirect(url_for('teacher_dashboard' if role=='teacher' else 'student_dashboard'))
-        flash("Invalid username or password")
-    return render_template('login.html')
+    qr_data = f"ATTENDANCE:{token}"
 
-@app.route('/register', methods=['GET','POST'])
-def register():
-    if request.method == 'POST':
-        username=request.form.get('username'); password=request.form.get('password'); name=request.form.get('name'); roll_no=request.form.get('roll_no'); role=request.form.get('role')
-        hashed=generate_password_hash(password)
-        try:
-            if role=='teacher':
-                query_db("INSERT INTO teachers (username,password,name) VALUES (?,?,?)",(username,hashed,name),commit=True)
-            else:
-                query_db("INSERT INTO students (username,password,name,roll_no) VALUES (?,?,?,?)",(username,hashed,name,roll_no),commit=True)
-            flash("Registered! Login now"); return redirect(url_for('login'))
-        except Exception as e:
-            flash(f"Error: {e}")
-    return render_template('register.html')
+    qr = segno.make(
+        qr_data
+    )
 
-@app.route('/teacher_dashboard')
-def teacher_dashboard():
-    if session.get('role')!='teacher': return redirect(url_for('login'))
-    records=query_db("SELECT * FROM attendance ORDER BY id DESC")
-    return render_template('teacher_dashboard.html', records=records, name=session.get('name'))
+    # --------------------------------------------------------
+    # QR folder
+    # --------------------------------------------------------
 
-@app.route('/student_dashboard')
-def student_dashboard():
-    if session.get('role')!='student': return redirect(url_for('login'))
-    return render_template('student_dashboard.html', name=session.get('name'), roll_no=session.get('roll_no'))
+    qr_folder = os.path.join(
+        "static",
+        "qr_codes"
+    )
 
-@app.route('/login/google')
-def google_login():
-    if not google: flash("Google not configured"); return redirect(url_for('login'))
-    return google.authorize_redirect(url_for('google_callback', _external=True))
+    os.makedirs(
+        qr_folder,
+        exist_ok=True
+    )
 
-@app.route('/callback/google')
-def google_callback():
-    try:
-        token=google.authorize_access_token()
-        info=token.get('userinfo') or google.get('https://openidconnect.googleapis.com/v1/userinfo').json()
-        session['email']=info.get('email'); session['name']=info.get('name'); session['user']=info.get('email'); session['role']='student'
-        return redirect(url_for('student_dashboard'))
-    except Exception as e:
-        flash(f"Google failed {e}"); return redirect(url_for('login'))
+    filename = "attendance_qr.png"
 
-@app.route('/scan')
+    filepath = os.path.join(
+        qr_folder,
+        filename
+    )
+
+    qr.save(
+        filepath,
+        scale=8
+    )
+
+    # --------------------------------------------------------
+    # Display QR
+    # --------------------------------------------------------
+
+    return render_template(
+        "generate_qr.html",
+
+        subject=subject,
+
+        class_name=class_name,
+
+        division=division,
+
+        qr_image=filename,
+
+        expires_at=expires_at.strftime(
+            "%H:%M:%S"
+        )
+    )
+
+
+# ============================================================
+# SCAN QR PAGE
+# ============================================================
+
+@app.route("/scan_qr")
 def scan_qr():
-    return render_template('scan_qr.html')
 
+    if session.get("role") != "student":
+
+        return redirect(url_for("home"))
+
+    return render_template(
+        "scan_qr.html"
+    )
+
+
+# ============================================================
+# MARK ATTENDANCE
+# ============================================================
+
+@app.route("/mark_attendance", methods=["POST"])
 @app.route('/mark_attendance', methods=['POST'])
 def mark_attendance():
-    data=request.get_json() if request.is_json else request.form
-    name=data.get('name') or session.get('name') or 'Unknown'
-    roll_no=data.get('roll_no') or session.get('roll_no') or ''
-    email=session.get('email') or data.get('email') or session.get('user') or ''
-    now=datetime.now()
-    timestamp=now.strftime("%Y-%m-%d %H:%M:%S"); date_str=now.strftime("%Y-%m-%d")
-    try:
-        query_db("INSERT INTO attendance (name,roll_no,email,timestamp,date) VALUES (?,?,?,?,?)",(name,roll_no,email,timestamp,date_str),commit=True)
-        return jsonify({"success":True,"message":f"Marked {name} at {timestamp}"})
-    except Exception as e:
-        return jsonify({"success":False,"message":str(e)}),500
 
-@app.route('/report')
-@app.route('/attendance_report')
-def report():
-    records=query_db("SELECT * FROM attendance ORDER BY id DESC")
-    return render_template('report.html', records=records)
+    # --------------------------------------------------------
+    # Student must be logged in
+    # --------------------------------------------------------
 
-@app.route('/logout')
+    if session.get("role") != "student":
+
+        return jsonify({
+            "success": False,
+            "message": "Please login as a student first."
+        }), 401
+
+
+    # --------------------------------------------------------
+    # Get QR data
+    # --------------------------------------------------------
+
+    data = request.get_json(
+        silent=True
+    )
+
+    if not data:
+
+        return jsonify({
+            "success": False,
+            "message": "No QR data received."
+        }), 400
+
+
+    qr_data = data.get(
+        "qr_data",
+        ""
+    ).strip()
+
+
+    if not qr_data:
+
+        return jsonify({
+            "success": False,
+            "message": "Invalid QR code."
+        }), 400
+
+
+    # --------------------------------------------------------
+    # Check QR format
+    # --------------------------------------------------------
+
+    if not qr_data.startswith(
+        "ATTENDANCE:"
+    ):
+
+        return jsonify({
+            "success": False,
+            "message": "This is not a valid attendance QR."
+        }), 400
+
+
+    token = qr_data.replace(
+        "ATTENDANCE:",
+        "",
+        1
+    ).strip()
+
+
+    # --------------------------------------------------------
+    # Find QR in database
+    # --------------------------------------------------------
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM qr_codes
+        WHERE qr_token = ?
+    """, (token,))
+
+    qr = cursor.fetchone()
+
+
+    if not qr:
+
+        conn.close()
+
+        return jsonify({
+            "success": False,
+            "message": "QR code not found."
+        }), 404
+
+
+    # --------------------------------------------------------
+    # Check QR expiry
+    # --------------------------------------------------------
+
+    expires_at = datetime.strptime(
+        qr["expires_at"],
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    if datetime.now() > expires_at:
+
+        conn.close()
+
+        return jsonify({
+            "success": False,
+            "message": "QR code has expired."
+        })
+
+
+    # --------------------------------------------------------
+    # Get logged-in student
+    # --------------------------------------------------------
+
+    student_name = session.get(
+        "user"
+    )
+
+    student_roll = session.get(
+        "roll"
+    )
+
+
+    # --------------------------------------------------------
+    # Prevent duplicate attendance
+    # --------------------------------------------------------
+
+    today = datetime.now().strftime(
+        "%Y-%m-%d"
+    )
+
+    cursor.execute("""
+        SELECT id
+        FROM attendance
+
+        WHERE student = ?
+        AND subject = ?
+        AND date = ?
+    """, (
+        student_roll,
+        qr["subject"],
+        today
+    ))
+
+    already_marked = cursor.fetchone()
+
+
+    if already_marked:
+
+        conn.close()
+
+        return jsonify({
+            "success": False,
+            "message": "Attendance already marked for this lecture."
+        })
+
+
+    # --------------------------------------------------------
+    # Insert attendance
+    # --------------------------------------------------------
+
+    cursor.execute("""
+        INSERT INTO attendance
+        (
+            student,
+            subject,
+            class_name,
+            division,
+            date,
+            time,
+            status
+        )
+
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        student_roll,
+        qr["subject"],
+        qr["class_name"],
+        qr["division"],
+        today,
+        datetime.now().strftime(
+            "%H:%M:%S"
+        ),
+        "Present"
+    ))
+
+    data = request.get_json() or request.form
+    name = data.get('name') or session.get('name') or 'Student'
+    roll_no = data.get('roll_no') or session.get('roll_no') or ''
+    email = session.get('email') or data.get('email') or ''
+    
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+    date_str = now.strftime("%Y-%m-%d")
+    
+    # FIXED: No check for existing attendance - allows multiple per day
+    conn, is_pg = get_db()
+    cur = conn.cursor()
+    if is_pg:
+        cur.execute("INSERT INTO attendance (name, roll_no, email, timestamp, date) VALUES (%s,%s,%s,%s,%s)", (name, roll_no, email, timestamp, date_str))
+    else:
+        cur.execute("INSERT INTO attendance (name, roll_no, email, timestamp, date) VALUES (?,?,?,?,?)", (name, roll_no, email, timestamp, date_str))
+conn.commit()
+conn.close()
+
+
+    return jsonify({
+        "success": True,
+        "message":
+            f"Attendance marked successfully for {student_name}!"
+    })
+
+
+# ============================================================
+# ATTENDANCE REPORT
+# ============================================================
+
+@app.route("/attendance_report")
+def attendance_report():
+
+    if session.get("role") != "teacher":
+
+        return redirect(url_for("home"))
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM attendance
+        ORDER BY date DESC, time DESC
+    """)
+
+    attendance = cursor.fetchall()
+
+    conn.close()
+
+    return render_template(
+        "attendance_report.html",
+        attendance=attendance
+    )
+
+
+# ============================================================
+# STUDENT ATTENDANCE
+# ============================================================
+
+@app.route("/my_attendance")
+def my_attendance():
+
+    if session.get("role") != "student":
+
+        return redirect(url_for("home"))
+
+    roll = session.get(
+        "roll"
+    )
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM attendance
+        WHERE student = ?
+        ORDER BY date DESC, time DESC
+    """, (roll,))
+
+    attendance = cursor.fetchall()
+
+    conn.close()
+
+    return render_template(
+        "my_attendance.html",
+        attendance=attendance
+    )
+
+
+# ============================================================
+# LOGOUT
+# ============================================================
+
+@app.route("/logout")
 def logout():
-    session.clear(); return redirect(url_for('index'))
+
+    session.clear()
+
+    return redirect(
+        url_for("home")
+    )
+
+
+# ---------------- GOOGLE LOGIN ---------------- #
+
+@app.route("/google/login")
+def google_login():
+    redirect_uri = url_for(
+    "google_callback",
+    _external=True,
+    _scheme="http"
+    )   
+    return google.authorize_redirect(redirect_uri)
+
+
+@app.route("/google/callback")
+def google_callback():
+
+    token = google.authorize_access_token()
+
+    user_info = token.get("userinfo")
+
+    if not user_info:
+        return "Could not get Google account information."
+
+    email = user_info["email"]
+    name = user_info.get("name", "")
+
+    session["user"] = name
+    session["email"] = email
+    session["role"] = "student"
+
+    return redirect(url_for("student_dashboard"))
+
+
+
+
+# ============================================================
+# ERROR HANDLER
+# ============================================================
+
+@app.errorhandler(404)
+def page_not_found(error):
+
+    return """
+    <h1>404 - Page Not Found</h1>
+    <a href="/">Go to Login</a>
+    """, 404
+
+
+# ============================================================
+# START APPLICATION
+# ============================================================
+
+# Create tables on startup - for Render/gunicorn
+create_tables()
+
+print("")
+print("----------------------------------------")
+print("  QR ATTENDANCE SYSTEM")
+print("----------------------------------------")
+print("")
+print("Teacher Login:")
+print("Username: teacher")
+print("Password: 1234")
+print("")
+print("Website:")
+print("http://127.0.0.1:5000")
+print("")
+print("----------------------------------------")
+print("")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=True
+    )
+    return jsonify({"success": True, "message": f"Attendance marked at {timestamp}"})
