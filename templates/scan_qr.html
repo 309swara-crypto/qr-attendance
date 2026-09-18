@@ -1,127 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Scan QR</title>
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css') }}">
-
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: Arial; text-align: center; padding: 20px; }
+        #reader { width: 350px; margin: auto; }
+        #result { margin-top: 20px; font-size: 18px; font-weight: bold; }
+    </style>
 </head>
-
 <body>
+    <h2>Scan Teacher QR Code</h2>
+    <div id="reader"></div>
+    <div id="result"></div>
 
-<div class="container">
-
-    <h1>📷 Scan Attendance QR</h1>
-
-    <p>Point your camera at the teacher's QR code.</p>
-
-    <div id="reader" style="width: 300px; margin: auto;"></div>
-
-    <p id="result"></p>
-
-    <br>
-
-    <a href="{{ url_for('student_dashboard') }}">
-        Back to Dashboard
-    </a>
-
-</div>
-
-<script>
-
-let attendanceMarked = false;
-
-
-function qrScanned(decodedText) {
-
-    // Stop duplicate scanning
-    if (attendanceMarked) {
-        return;
-    }
-
-    attendanceMarked = true;
-
-    document.getElementById("result").innerHTML =
-        "⏳ Checking QR...";
-
-
-    // Send QR token to Flask
-    fetch("/mark_attendance", {
-
-        method: "POST",
-
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-            qr_data: decodedText
-        })
-
-    })
-
-    .then(response => response.json())
-
-    .then(data => {
-
-        if (data.success) {
-
-            document.getElementById("result").innerHTML =
-                "✅ " + data.message;
-
-            // Stop camera after successful attendance
-            scanner.clear();
-
-        } else {
-
-            document.getElementById("result").innerHTML =
-                "❌ " + data.message;
-
-            // Allow another scan if QR failed
-            attendanceMarked = false;
+    <script>
+        let attendanceMarked = false;
+        
+        function onScanSuccess(decodedText, decodedResult) {
+            if (attendanceMarked) return;
+            attendanceMarked = true;
+            
+            document.getElementById("result").innerHTML = "Processing: " + decodedText;
+            
+            fetch("/mark_attendance", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ qr_data: decodedText })
+            })
+            .then(async (response) => {
+                const text = await response.text();
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.log("Server returned:", text);
+                    throw new Error("Not logged in as student on phone! Please login first. Server returned login page.");
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                    document.getElementById("result").innerHTML = "✅ " + data.message;
+                } else {
+                    document.getElementById("result").innerHTML = "❌ " + data.message;
+                    attendanceMarked = false;
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                document.getElementById("result").innerHTML = "❌ " + error.message + "<br><br><b>FIX:</b> Open /login on this phone and login as student first!";
+                attendanceMarked = false;
+            });
         }
 
-    })
-
-    .catch(error => {
-
-        console.error(error);
-
-        document.getElementById("result").innerHTML =
-            "❌ Error connecting to server.";
-
-        attendanceMarked = false;
-
-    });
-}
-
-
-function qrError(errorMessage) {
-    // Ignore normal scanning errors
-}
-
-
-let scanner = new Html5QrcodeScanner(
-
-    "reader",
-
-    {
-        fps: 10,
-        qrbox: 250
-    }
-
-);
-
-
-scanner.render(qrScanned, qrError);
-
-</script>
-
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
 </body>
 </html>
