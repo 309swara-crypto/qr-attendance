@@ -896,28 +896,25 @@ def page_not_found(error):
 # START APPLICATION
 # ============================================================
 
+# Create tables on startup - for Render/gunicorn
+create_tables()
+
+print("")
+print("----------------------------------------")
+print("  QR ATTENDANCE SYSTEM")
+print("----------------------------------------")
+print("")
+print("Teacher Login:")
+print("Username: teacher")
+print("Password: 1234")
+print("")
+print("Website:")
+print("http://127.0.0.1:5000")
+print("")
+print("----------------------------------------")
+print("")
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
-
-    # Create database and tables
-
-    create_tables()
-
-    print("")
-    print("======================================")
-    print("     QR ATTENDANCE SYSTEM")
-    print("======================================")
-    print("")
-    print("Teacher Login:")
-    print("Username: teacher")
-    print("Password: 1234")
-    print("")
-    print("Website:")
-    print("http://127.0.0.1:5000")
-    print("")
-    print("======================================")
-    print("")
-
     app.run(
         host="127.0.0.1",
         port=5000,
