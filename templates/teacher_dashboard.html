@@ -1,78 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Teacher Panel</title>
-<style>
-body{margin:0;font-family:Arial;background:#2e4bd2;min-height:100vh}
-.nav{background:white;padding:14px 18px;display:flex;justify-content:space-between}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;max-width:600px;margin:auto}
-.card{background:white;border-radius:16px;padding:20px 10px;text-align:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center;z-index:99}
-.box{background:white;border-radius:16px;padding:20px;width:90%;max-width:420px}
-select,input{width:100%;padding:12px;margin:6px 0;border:1px solid #ddd;border-radius:8px;box-sizing:border-box}
-.btn{width:100%;padding:12px;background:#2e4bd2;color:white;border:none;border-radius:8px;font-weight:700;margin:5px 0;cursor:pointer}
-table{width:100%;background:white;border-collapse:collapse;border-radius:10px;overflow:hidden} th{background:#2e4bd2;color:white;padding:10px} td{padding:8px;border-bottom:1px solid #eee;font-size:13px}
-.login-wrap{display:flex;justify-content:center;align-items:center;min-height:100vh}.login-card{background:white;width:340px;border-radius:20px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
-</style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teacher</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>body{margin:0;font-family:Arial;background:#eef2ff}.top{padding:12px;background:#0d47a1;color:#fff;display:flex;justify-content:space-between}.btn{padding:10px 14px;border-radius:10px;border:0;color:#fff;font-weight:700;cursor:pointer}.login-wrap{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:16px}.login-card{background:#fff;padding:22px;border-radius:16px;width:100%;max-width:380px;box-shadow:0 12px 30px rgba(0,0,0,.12)}.login-card input{width:100%;padding:12px;margin:8px 0;border-radius:10px;border:1px solid #ddd}.card{background:#fff;border-radius:14px;padding:14px;margin:12px}</style>
 </head>
 <body>
 {% if is_login %}
 <div class="login-wrap"><div class="login-card">
-<h3 style="text-align:center;color:#1a237e">👨‍🏫 Teacher Login</h3>
-<form method="post" action="/teacher_login"><input name="uid" placeholder="Teacher ID: dbms" required><input name="pwd" type="password" placeholder="Password: 1234" required><button class="btn" style="background:#1a237e">Login with ID</button></form>
-<button class="btn" style="background:white;border:1px solid #ddd;color:black" onclick="gLogin()">🔵 Login with Google</button>
-<p style="text-align:center;font-size:12px"><a href="/">← Back Home</a></p>
+<h3 style="text-align:center;color:#0d47a1">👨‍🏫 Teacher Login</h3>
+<form method="post" action="/teacher_login"><input name="uid" placeholder="ID: dbms" required><input name="pwd" type="password" placeholder="Pass: 1234" required><button class="btn" style="background:#0d47a1;width:100%">Login with ID/Pass</button></form>
+<hr><p style="text-align:center;font-size:13px">OR Google</p>
+<div id="g_id_onload" data-client_id="1028258761253-b1ut3e6kdprrdqrqhr8pn9sqgjv9arj1.apps.googleusercontent.com" data-callback="handleTeacherGoogle"></div>
+<div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-width="320" style="display:flex;justify-content:center"></div>
+<p style="text-align:center"><a href="/">← Home</a></p>
 </div></div>
-<script>function gLogin(){let e=prompt("Enter Teacher Google Email:"); if(!e)return; fetch('/google_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'teacher',email:e})}).then(r=>r.json()).then(d=>location.href=d.redirect);}</script>
-{% else %}
-<div class="nav"><b>👨‍🏫 {{teacher.upper()}}</b><a href="/logout">Logout</a></div>
-<div class="grid">
-<div class="card" onclick="openGen()"><div style="font-size:28px">📱</div><b>Generate QR</b><br><small>2 min valid</small></div>
-<div class="card" onclick="viewStud()"><div style="font-size:28px">👥</div><b>View Students</b><br><small>{{sc}} students</small></div>
-<div class="card" onclick="openAdd()"><div style="font-size:28px">➕</div><b>Add Student</b></div>
-<div class="card" onclick="viewAtt()"><div style="font-size:28px">📊</div><b>Attendance</b><br><small>{{ac}} records</small></div>
-<div class="card" onclick="location.href='/download_attendance'"><div style="font-size:28px">⬇️</div><b>Download Attendance</b></div>
-<div class="card" onclick="location.href='/students_excel'"><div style="font-size:28px">📄</div><b>Students Excel</b></div>
-</div>
-<div id="genM" class="modal"><div class="box"><h3>Generate QR (2 Min)</h3><select id="cSel">{% for c in classes %}<option>{{c}}</option>{% endfor %}</select><select id="sSel">{% for s in subjects %}<option>{{s}}</option>{% endfor %}</select><p id="tloc" style="font-size:12px">📍 Checking location...</p><button class="btn" onclick="genQR()">Generate QR</button><div id="qrR" style="text-align:center;margin-top:10px"></div><button class="btn" style="background:#ddd;color:black" onclick="closeM()">Close</button></div></div>
-<div id="addM" class="modal"><div class="box"><h3>Add Student</h3><input id="sn" placeholder="Name"><input id="sr" placeholder="Roll"><select id="sc">{% for c in classes %}<option>{{c}}</option>{% endfor %}</select><input id="se" placeholder="Email"><button class="btn" onclick="addS()">Save</button><button class="btn" style="background:#ddd;color:black" onclick="closeM()">Close</button></div></div>
-<div id="dataM" class="modal"><div class="box" style="max-width:600px;max-height:80vh;overflow:auto"><div id="dataC"></div><button class="btn" style="background:#ddd;color:black" onclick="closeM()">Close</button></div></div>
 <script>
-let teacherLat=0,teacherLng=0;
-function setLocMsg(msg){let el=document.getElementById('tloc'); if(el) el.innerHTML=msg;}
-// Try to get location but DON'T BLOCK
-try{
- if(navigator.geolocation){
-  navigator.geolocation.getCurrentPosition(function(p){
-    teacherLat=p.coords.latitude; teacherLng=p.coords.longitude;
-    setLocMsg('✅ Location: '+teacherLat.toFixed(4)+','+teacherLng.toFixed(4)+' (Locked)');
-  }, function(err){
-    teacherLat=0; teacherLng=0;
-    setLocMsg('⚠️ Location OFF - QR will work without location (Laptop mode)');
-  }, {enableHighAccuracy:true, timeout:8000});
- } else {
-  setLocMsg('⚠️ No GPS - QR will work without location');
- }
-}catch(e){ setLocMsg('⚠️ Location OFF - QR will work'); }
-
-function openGen(){document.getElementById('genM').style.display='flex'} 
-function openAdd(){document.getElementById('addM').style.display='flex'} 
-function closeM(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none')}
-
-function genQR(){
- // FIXED: No alert, always generate
- let fd=new FormData(); fd.append('class',document.getElementById('cSel').value); fd.append('subject',document.getElementById('sSel').value); fd.append('lat',teacherLat); fd.append('lng',teacherLng);
- fetch('/generate_qr',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
-  let locInfo = teacherLat!=0 ? `📍 ${teacherLat.toFixed(4)},${teacherLng.toFixed(4)}` : `📍 Location OFF - No distance check`;
-  document.getElementById('qrR').innerHTML=`<p><b>${d.subject}-${d.class}</b> <span id="tm" style="color:red;font-weight:700;background:yellow;padding:4px 8px;border-radius:6px">2:00</span><br><small>${locInfo}</small></p><div style="border:3px solid #2e4bd2;padding:10px;display:inline-block;border-radius:12px"><img src="data:image/png;base64,${d.img}" width="220"></div><p>Token: <b>${d.token}</b><br><small>Valid 2 mins</small></p>`;
-  let t=120; let iv=setInterval(()=>{let m=Math.floor(t/60); let s=t%60; let el=document.getElementById('tm'); if(el) el.innerHTML=m+':'+(s<10?'0':'')+s; t--; if(t<0){clearInterval(iv); document.getElementById('qrR').innerHTML='<h3 style=color:red>❌ QR Expired</h3>';}},1000);
- });
-}
-function addS(){let fd=new FormData(); fd.append('name',document.getElementById('sn').value); fd.append('roll',document.getElementById('sr').value); fd.append('class',document.getElementById('sc').value); fd.append('email',document.getElementById('se').value); fetch('/add_student',{method:'POST',body:fd}).then(()=>{alert('Added');closeM();});}
-function viewStud(){fetch('/get_students').then(r=>r.json()).then(d=>{let h=`<h3>Students (${d.length})</h3><table><tr><th>Name</th><th>Roll</th><th>Class</th></tr>`; d.forEach(s=>h+=`<tr><td>${s.name}</td><td>${s.roll}</td><td>${s.class}</td></tr>`); h+='</table>'; document.getElementById('dataC').innerHTML=h; document.getElementById('dataM').style.display='flex';});}
-function viewAtt(){fetch('/get_attendance').then(r=>r.json()).then(d=>{let h=`<h3>Attendance (${d.length})</h3><table><tr><th>Name</th><th>Roll</th><th>Sub</th><th>Time</th></tr>`; d.forEach(a=>h+=`<tr><td>${a.name}</td><td>${a.roll}</td><td>${a.subject}</td><td>${a.time}</td></tr>`); h+='</table>'; document.getElementById('dataC').innerHTML=h; document.getElementById('dataM').style.display='flex';});}
+function handleTeacherGoogle(res){const payload=JSON.parse(atob(res.credential.split('.')[1]));fetch('/google_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'teacher',email:payload.email,name:payload.name})}).then(r=>r.json()).then(x=>{location.href=x.redirect});}
+</script>
+{% else %}
+<div class="top"><div><b>👨‍🏫 {{teacher}}</b></div>
+ <div><a href="/logout" style="color:#fff">Logout</a></div></div>
+<div class="card">
+<div style="display:flex;gap:8px"><select id="cls" style="flex:1;padding:10px;border-radius:10px">{% for c in classes %}<option>{{c}}</option>{% endfor %}</select><select id="sub" style="flex:1;padding:10px;border-radius:10px">{% for s in subjects %}<option>{{s}}</option>{% endfor %}</select></div>
+<p id="locStatus">📍 Getting location...</p>
+<button class="btn" style="background:#0d47a1;width:100%" onclick="gen()">Generate QR (2 min + 500m)</button>
+<div id="qrBox" style="display:none;text-align:center;margin-top:12px"><img id="qrImg" style="width:230px;border:8px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.2)"><p id="qrInfo"></p><p id="timer" style="color:red;font-weight:bold"></p></div>
+</div>
+<div class="card"><h4>Live: {{ac}} Present / {{sc}} Students <a href="/download_attendance" style="float:right">📥 Excel</a></h4><div id="attList"></div></div>
+<script>
+let tLat=0,tLng=0; navigator.geolocation.getCurrentPosition(p=>{tLat=p.coords.latitude;tLng=p.coords.longitude;locStatus.innerHTML=`✅ Locked: ${tLat.toFixed(5)}, ${tLng.toFixed(5)}`});
+function gen(){const fd=new FormData();fd.append('class',cls.value);fd.append('subject',sub.value);fd.append('lat',tLat);fd.append('lng',tLng);fetch('/generate_qr',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{qrBox.style.display='block';qrImg.src='data:image/png;base64,'+d.img;qrInfo.innerText=d.class+' | '+d.subject+' | '+d.token;let l=120;let iv=setInterval(()=>{l--;timer.innerText=l+'s left';if(l<=0){clearInterval(iv);qrBox.style.display='none'}},1000)});}
+setInterval(()=>{fetch('/get_attendance').then(r=>r.json()).then(data=>{let h='<table style="width:100%;font-size:13px"><tr><th>Name</th><th>Roll</th><th>Sub</th><th>Dist</th><th>Time</th></tr>';data.slice(-20).reverse().forEach(a=>{h+=`<tr><td>${a.name}</td><td>${a.roll}</td><td>${a.subject}</td><td>${a.dist}m</td><td>${a.time}</td></tr>`});h+='</table>';attList.innerHTML=h})},3000);
 </script>
 {% endif %}
-</body>
-</html>
+</body></html>
