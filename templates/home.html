@@ -1,61 +1,27 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QR Attendance</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<style>
-*{box-sizing:border-box;font-family:Arial}
-body{margin:0;background:#1e40af;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:15px}
-.card{background:#fff;width:100%;max-width:380px;border-radius:16px;padding:22px}
-h3{text-align:center;color:#1e40af}
-.row{display:flex;gap:30px;justify-content:center;margin:10px 0}
-input{width:100%;padding:12px;margin:6px 0 12px;border:1px solid #ccc;border-radius:8px}
-.btn{width:100%;padding:12px;border:0;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:8px;display:flex;justify-content:center;gap:8px}
-.blue{background:#2563eb;color:#fff}
-.white{background:#fff;color:#333;border:1px solid #ccc}
-.note{font-size:11px;color:#666;text-align:center;margin-top:10px}
-</style>
-</head>
-<body>
-<div class="card">
-<h3>📘 QR Attendance</h3>
-<form method="POST" action="/login">
-<div class="row">
-<label><input type="radio" name="role" value="teacher" checked> Teacher</label>
-<label><input type="radio" name="role" value="student"> Student</label>
-</div>
-ID No<input name="id" placeholder="Enter ID No e.g. maths" required>
-Password<input name="password" placeholder="Enter Password e.g. 1234" required>
-<button class="btn blue" type="submit">Login with ID</button>
-</form>
-<button class="btn white" onclick="google('student')">Student - Register with Google</button>
-<button class="btn white" onclick="google('teacher')">Teacher - Login with Google</button>
-<div class="note">Teacher: maths / 1234<br>Student: Roll No + Location 500m</div>
-<div id="gbtn" style="display:flex;justify-content:center;margin-top:10px"></div>
-</div>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="font-family:Arial; padding:20px; text-align:center;">
+<h2>Welcome {{name}}!</h2>
+<p><b>Roll:</b> {{roll}} | <b>Class:</b> {{class_name}}</p>
+<p id="loc">📍 Checking location...</p>
+
+<a href="/mark_attendance" style="display:block; background:#4CAF50; color:white; padding:15px; border-radius:10px; text-decoration:none; font-weight:bold; margin-top:20px;">
+📷 Scan QR & Mark Attendance
+</a>
+
+<a href="/my_attendance" style="display:block; background:#2196F3; color:white; padding:15px; border-radius:10px; text-decoration:none; font-weight:bold; margin-top:15px;">
+📊 View My Attendance
+</a>
+
+<a href="/logout" style="display:block; background:#f44336; color:white; padding:12px; border-radius:10px; text-decoration:none; margin-top:15px;">
+Logout
+</a>
+
 <script>
-let curRole='teacher';
-function google(role){
-curRole=role;
-google.accounts.id.initialize({client_id:"1028743894018-jo9o39j23pvlrtlq4cf6g3r86nvcoibq.apps.googleusercontent.com",callback:handle});
-google.accounts.id.renderButton(document.getElementById('gbtn'),{theme:"outline",size:"large",width:320});
-google.accounts.id.prompt();
-}
-function handle(res){
-const p=JSON.parse(atob(res.credential.split('.')[1]));
-fetch('/google_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:curRole,email:p.email,name:p.name})})
-.then(r=>r.json()).then(x=>{
-if(x.need_details) location.href=`/google_form?email=${encodeURIComponent(x.email)}&name=${encodeURIComponent(x.name)}`;
-else location.href=x.redirect;
+navigator.geolocation.getCurrentPosition(p=>{
+  document.getElementById('loc').innerHTML = "📍 Location OK: " + p.coords.latitude.toFixed(4);
 });
-}
-document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('change',e=>{
-const isStu=e.target.value=='student';
-document.querySelector('input[name="id"]').placeholder=isStu?'Enter Roll No e.g. 71':'Enter ID No e.g. maths';
-document.querySelector('input[name="password"]').placeholder=isStu?'Enter Your Name':'Enter Password e.g. 1234';
-}));
 </script>
 </body>
 </html>
