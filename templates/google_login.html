@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{font-family:Arial;text-align:center;padding:30px;background:#eef2ff}.card{background:white;padding:25px;border-radius:16px;max-width:360px;margin:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)}</style></head>
+<body><div class="card">
+<h3>🎓 Student Register with Google</h3>
+<p style="font-size:11px;color:#666">First time? Login with Google and register your Roll No</p>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<div id="g_id_onload" data-client_id="{{client_id}}" data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
+<div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" style="display:flex;justify-content:center;margin:20px 0"></div>
+<form id="form" action="/google_login" method="POST"><input type="hidden" name="credential" id="cred"></form>
+<br><a href="/" style="font-size:12px">← Back to Login</a>
+</div>
+<script>function handleCredentialResponse(r){document.getElementById('cred').value=r.credential;document.getElementById('form').submit();}</script>
+</body></html>
