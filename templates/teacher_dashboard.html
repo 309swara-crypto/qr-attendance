@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MATHS - Teacher Panel</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -42,7 +43,6 @@ th,td{border:1px solid #ddd;padding:6px;text-align:left}
 <div style="text-align:center;font-size:10px;color:#888;margin-top:10px">QR Attendance System v2.0.2</div>
 </div>
 
-<!-- Generate QR Modal -->
 <div id="qrModal" class="modal"><div class="box">
 <h3>Generate QR (Subject wise)</h3>
 Select Subject<select id="sub"><option>maths</option><option>physics</option><option>chemistry</option><option>TYCS</option></select>
@@ -54,7 +54,6 @@ Choose Class<select id="cls"><option>TYCS</option><option>TYAIML</option><option
 <button class="btn gray" onclick="closeModal('qrModal')">Close</button>
 </div></div>
 
-<!-- View Students Modal -->
 <div id="viewModal" class="modal"><div class="box">
 <h3>All Students ({{students|length}})</h3>
 <table><tr><th>Roll</th><th>Name</th><th>Class</th></tr>
@@ -63,13 +62,12 @@ Choose Class<select id="cls"><option>TYCS</option><option>TYAIML</option><option
 <button class="btn gray" onclick="closeModal('viewModal')">Close</button>
 </div></div>
 
-<!-- Add Student Modal -->
 <div id="addModal" class="modal"><div class="box">
 <h3>Add Student Manually</h3>
 <form method="POST" action="/add_student">
 Full Name<input name="name" placeholder="Full Name e.g. Swarup" required>
 Roll No<input name="roll" placeholder="Roll No e.g. 71" required>
-TYCS<input type="hidden" name="class" value="TYCS" id="addClassInput">
+<input type="hidden" name="class" value="TYCS" id="addClassInput">
 <select onchange="document.getElementById('addClassInput').value=this.value"><option>TYCS</option><option>TYAIML</option><option>TE-A</option><option>TE-B</option></select>
 Email (optional)<input name="email" placeholder="Email (optional)">
 <button class="btn blue" type="submit">➕ Save Student</button>
@@ -77,11 +75,10 @@ Email (optional)<input name="email" placeholder="Email (optional)">
 <button class="btn gray" onclick="closeModal('addModal')">Close</button>
 </div></div>
 
-<!-- Attendance Modal -->
 <div id="attModal" class="modal"><div class="box">
 <h3>Today Attendance ({{attendance|length}})</h3>
-<table><tr><th>Roll</th><th>Name</th><th>Time</th></tr>
-{% for a in attendance %}<tr><td>{{a[0]}}</td><td>{{a[1]}}</td><td>{{a[4]}}</td></tr>{% endfor %}
+<table><tr><th>Roll</th><th>Name</th><th>Time</th><th>Sub</th></tr>
+{% for a in attendance %}<tr><td>{{a[0]}}</td><td>{{a[1]}}</td><td>{{a[4]}}</td><td>{{a[5]}}</td></tr>{% endfor %}
 </table>
 <button class="btn gray" onclick="closeModal('attModal')">Close</button>
 </div></div>
@@ -96,13 +93,12 @@ navigator.geolocation.getCurrentPosition(p=>{
 function openModal(id){document.getElementById(id).style.display='flex';}
 function closeModal(id){document.getElementById(id).style.display='none'; if(id=='qrModal'){document.getElementById('qrcode').innerHTML=''; document.getElementById('qrTimer').innerText=''; clearInterval(window.qrInt);}}
 
-let qrObj=null;
 function generateQR(){
  let sub=document.getElementById('sub').value;
  let cls=document.getElementById('cls').value;
  let data=JSON.stringify({sub:sub,class:cls,lat:lat,lon:lon,time:Date.now()});
  document.getElementById('qrcode').innerHTML='';
- qrObj=new QRCode(document.getElementById('qrcode'),{text:data,width:200,height:200});
+ new QRCode(document.getElementById('qrcode'),{text:data,width:220,height:220});
  let sec=30;
  document.getElementById('qrTimer').innerText=sec+'s remaining';
  window.qrInt=setInterval(()=>{
@@ -117,8 +113,8 @@ function downloadExcel(type){
   csv='Roll,Name,Class,Email\n';
   {% for s in students %}csv+="{{s[0]}},{{s[1]}},{{s[2]}},{{s[3]}}\n";{% endfor %}
  } else {
-  csv='Roll,Name,Class,Date,Time\n';
-  {% for a in attendance %}csv+="{{a[0]}},{{a[1]}},{{a[2]}},{{a[3]}},{{a[4]}}\n";{% endfor %}
+  csv='Roll,Name,Class,Date,Time,Subject\n';
+  {% for a in attendance %}csv+="{{a[0]}},{{a[1]}},{{a[2]}},{{a[3]}},{{a[4]}},{{a[5]}}\n";{% endfor %}
  }
  let blob=new Blob([csv],{type:'text/csv'});
  let url=URL.createObjectURL(blob);
