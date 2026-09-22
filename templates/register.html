@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{font-family:Arial;text-align:center;padding:20px;background:#eef2ff}.card{background:white;padding:25px;border-radius:16px;max-width:360px;margin:auto}input{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}button{width:100%;padding:12px;background:#1877f2;color:white;border:none;border-radius:8px;font-weight:bold}</style></head>
+<body><div class="card">
+<h3>Complete Registration</h3>
+<p style="font-size:13px">Hi {{name}}<br><small>{{email}}</small></p>
+<form action="/register" method="POST">
+<input name="roll" placeholder="Enter Roll No (e.g. 12)" required>
+<input name="class_name" placeholder="Class (e.g. TYCS)" value="tycs" required>
+<button>Register & Continue</button>
+</form>
+</div></body></html>
