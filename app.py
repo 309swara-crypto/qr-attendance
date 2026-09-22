@@ -55,7 +55,9 @@ def google_complete_register():
     session['s_name']=d['name']; session['s_roll']=d['roll']; session['s_class']=d['class']
     save()
     return jsonify({"redirect":"/student_dashboard"})
-
+@app.route('/google_form')
+def google_form():
+    return render_template('google_form.html', email=request.args.get('email'), name=request.args.get('name'))
 @app.route('/teacher_login', methods=['POST'])
 def teacher_login():
     uid=request.form.get('id','').lower(); pwd=request.form.get('password','')
