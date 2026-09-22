@@ -2,62 +2,68 @@
 <html><head><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Student Dashboard</title>
 <style>
-body{margin:0;font-family:Arial;background:#eef2ff}
-.top{background:linear-gradient(135deg,#2a4dd0,#1e3c9a);color:white;padding:15px;text-align:center}
-.card{background:white;margin:12px;border-radius:16px;padding:15px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
-.btn-scan{width:100%;padding:15px;background:#000;color:white;border:none;border-radius:10px;font-size:17px;font-weight:bold}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:11px}
-th{background:#f1f3f5;padding:7px;text-align:left} td{padding:7px;border-bottom:1px solid #eee}
-.present{background:#d4edda;color:#155724;padding:3px 8px;border-radius:12px;font-size:10px}
-.absent{background:#f8d7da;color:#721c24;padding:3px 8px;border-radius:12px;font-size:10px}
-#reader{margin-top:12px;border-radius:12px;overflow:hidden}
+body{font-family:Arial;background:#f0f3ff;margin:0;padding:0}
+.header{background:#1a3cd4;color:white;padding:15px;text-align:center}
+.container{padding:15px;max-width:400px;margin:auto}
+.card{background:white;border-radius:16px;padding:18px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,.1);text-align:center}
+.square-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:15px 0}
+.square{background:white;border-radius:16px;padding:18px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.1);height:90px;display:flex;flex-direction:column;justify-content:center}
+.square h2{margin:5px 0;font-size:26px;color:#1a3cd4}
+.square p{margin:0;font-size:12px;color:#666}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold;font-size:15px;cursor:pointer;margin:6px 0;display:block;text-decoration:none;text-align:center;box-sizing:border-box}
+.blue{background:#1a56ff;color:white}
+.green{background:#12a150;color:white}
+.dark{background:#222;color:white}
+.orange{background:#ff6a00;color:white}
+table{width:100%;border-collapse:collapse;font-size:11px;margin-top:10px}
+th{background:#1a3cd4;color:white;padding:6px}
+td{padding:6px;border-bottom:1px solid #eee}
+.present{color:green;font-weight:bold}
+.absent{color:red;font-weight:bold}
 </style></head>
 <body>
-<div class="top"><h3 style="margin:0">📚 QR Attendance</h3><small>Student Portal</small></div>
+<div class="header">
+<b>Welcome {{name}} ✅</b><br>
+<small>Roll: {{roll}} | Class: {{class_name}}</small>
+</div>
 
-<div class="card">
-<h3 style="margin:0">Hi {{name}} 👋</h3>
-<p style="margin:5px 0;color:#555;font-size:13px">Roll: {{roll}} | Class: {{class_name}}</p>
-<button class="btn-scan" onclick="startScan()">📷 Scan QR Now</button>
-<div id="reader" style="width:100%"></div>
-<p id="loc" style="font-size:11px;color:green;text-align:center;margin-top:8px"></p>
+<div class="container">
+
+<div class="square-grid">
+<div class="square"><p>🆔 Your Roll</p><h2>{{roll}}</h2></div>
+<div class="square"><p>📊 Total Present</p><h2>{{attendance|length}}</h2></div>
 </div>
 
 <div class="card">
-<h4 style="margin:0 0 5px 0">📊 My Attendance History</h4>
+<h3 style="margin:0 0 10px 0">📱 Attendance Actions</h3>
+<p style="font-size:11px;color:#666;margin:0 0 10px 0">Scan QR only when teacher generates it in classroom</p>
+<a href="/login"><button class="btn blue">📷 Scan QR Code</button></a>
+<p style="font-size:10px;color:#888;margin:5px 0">QR is valid for 10 mins & 50 meters range only</p>
+</div>
+
+<div class="card" style="text-align:left">
+<h4 style="margin:0 0 10px 0;text-align:center">📋 My Attendance History</h4>
+{% if attendance %}
 <table>
-<tr><th>Sub</th><th>Date</th><th>Status</th><th>Dist</th></tr>
+<tr><th>Subject</th><th>Date/Time</th><th>Status</th><th>Dist</th></tr>
 {% for a in attendance %}
 <tr>
-<td>{{a.subject}}</td>
-<td>{{a.time}}</td>
-<td><span class="{% if a.status=='PRESENT' %}present{% else %}absent{% endif %}">{{a.status}}</span></td>
-<td>{{a.distance}}</td>
+<td>{{a[3]}}</td>
+<td>{{a[4]}}</td>
+<td class="{% if a[5]=='PRESENT' %}present{% else %}absent{% endif %}">{{a[5]}}</td>
+<td>{{a[6]}}</td>
 </tr>
-{% else %}
-<tr><td colspan=4 style="text-align:center;color:#999;padding:15px">No attendance yet.<br>Scan QR first!</td></tr>
 {% endfor %}
 </table>
-<p style="font-size:11px;color:#666;margin-top:10px">Total Lectures: {{attendance|length}}</p>
+{% else %}
+<p style="text-align:center;color:#999;font-size:12px">No attendance yet — Scan first QR</p>
+{% endif %}
 </div>
 
-<div class="card" style="text-align:center">
-<a href="/logout" style="color:red;text-decoration:none;font-weight:bold">Logout</a>
+<div class="card">
+<p style="font-size:11px;color:#666;margin:0 0 8px 0">💡 Tip: Login with Google also works for attendance</p>
+<a href="/logout"><button class="btn" style="background:#ffe0e0;color:red">🚪 Logout</button></a>
 </div>
 
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script>
-var lat=18.5204, lon=73.8567;
-navigator.geolocation.getCurrentPosition(p=>{
- lat=p.coords.latitude; lon=p.coords.longitude;
- document.getElementById('loc').innerHTML="📍 Location: "+lat.toFixed(4)+","+lon.toFixed(4);
-}, err=>{document.getElementById('loc').innerHTML="⚠️ Allow location for GPS check";});
-
-function startScan(){
- var qr = new Html5Qrcode("reader");
- qr.start({facingMode:"environment"}, {fps:10, qrbox:{width:250,height:250}},
- (text)=>{ window.location.href=text; },
- (err)=>{}).catch(e=>{alert("Camera error: "+e);});
-}
-</script>
+</div>
 </body></html>
