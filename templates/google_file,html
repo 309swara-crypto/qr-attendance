@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+body{margin:0;background:#1e40af;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:15px;font-family:Arial}
+.card{background:#fff;width:100%;max-width:380px;border-radius:16px;padding:22px}
+input,select{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc}
+.btn{width:100%;padding:12px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-weight:bold;margin-top:10px}
+</style></head><body>
+<div class="card">
+<h3 style="text-align:center">Complete Registration</h3>
+<p style="text-align:center;font-size:13px">Email: <b>{{email}}</b><br>Name: {{name}}</p>
+<input id="roll" placeholder="Roll No e.g. 71">
+<select id="cls"><option>TYCS</option><option>TYAIML</option><option>TE-A</option><option>TE-B</option></select>
+<button class="btn" onclick="submitForm()">Submit & Login</button>
+</div>
+<script>
+function submitForm(){
+ fetch('/google_complete_register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:"{{email}}",name:"{{name}}",roll:document.getElementById('roll').value,class:document.getElementById('cls').value})})
+.then(r=>r.json()).then(d=>location.href=d.redirect);
+}
+</script></body></html>
