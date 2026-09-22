@@ -4,50 +4,130 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Teacher Panel</title>
 <style>
-body{margin:0;background:#1e40af;font-family:Arial}
-.top{background:#fff;margin:10px;border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
-.card{background:#fff;border-radius:14px;padding:16px;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.2)}
-.card b{font-size:13px}.card small{color:#666;font-size:11px;display:block;margin-top:3px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;justify-content:center;align-items:center;z-index:10;padding:10px}
-.box{background:#fff;width:100%;max-width:400px;border-radius:14px;padding:18px;max-height:90vh;overflow:auto}
-select,input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc}
-.btn{width:100%;padding:11px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-weight:bold;margin-top:8px;cursor:pointer}
-table{width:100%;font-size:11px;border-collapse:collapse} th{background:#1e40af;color:#fff;padding:6px} td{padding:6px;border-bottom:1px solid #eee}
-.loc{font-size:11px;color:#0d47a1;background:#e3f2fd;padding:6px;border-radius:6px;margin:8px 0}
+*{box-sizing:border-box;font-family:Arial}
+body{margin:0;background:#1e40af;min-height:100vh;display:flex;justify-content:center}
+.main{width:100%;max-width:420px;padding:10px}
+.top{background:#fff;border-radius:14px;padding:14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.top b{font-size:16px}
+.card{background:#fff;border-radius:14px;padding:18px;margin-bottom:12px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2);display:flex;justify-content:space-between;align-items:center}
+.card:active{transform:scale(0.98)}
+.card .left b{font-size:15px;display:block}
+.card .left small{color:#666;font-size:12px;margin-top:3px;display:block}
+.card .right{font-size:22px;color:#1e40af}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;justify-content:center;align-items:center;z-index:20;padding:12px}
+.box{background:#fff;width:100%;max-width:420px;border-radius:16px;padding:20px;max-height:92vh;overflow:auto}
+select,input{width:100%;padding:12px;margin:7px 0;border-radius:10px;border:1px solid #ccc;font-size:14px}
+.btn{width:100%;padding:13px;background:#2563eb;color:#fff;border:0;border-radius:10px;font-weight:bold;margin-top:10px;cursor:pointer;font-size:15px}
+table{width:100%;font-size:11px;border-collapse:collapse} th{background:#1e40af;color:#fff;padding:8px} td{padding:7px;border-bottom:1px solid #eee}
+.loc{font-size:11px;color:#0d47a1;background:#e3f2fd;padding:8px;border-radius:8px;margin:8px 0;text-align:center}
 </style>
 </head>
 <body>
-<div class="top"><div><b>MATHS - Teacher Panel</b><div style="font-size:11px;color:#666">{{teacher}} | 📍 Location 500m</div></div><a href="/logout" style="background:#1e40af;color:#fff;padding:6px 10px;border-radius:6px;text-decoration:none;font-size:12px">Logout</a></div>
-<div class="grid">
-<div class="card" onclick="openQR()"><b>📷 Generate QR</b><small>60 sec + Location</small></div>
-<div class="card" onclick="viewStud()"><b>👥 View All Students</b><small>Google + Manual</small></div>
-<div class="card" onclick="openAdd()"><b>➕ Add Student Manually</b><small>Keep roll no</small></div>
-<div class="card" onclick="viewAtt()"><b>📊 Attendance</b><small>All subjects</small></div>
-<div class="card" onclick="location.href='/download_attendance'"><b>⬇️ Download Attendance</b><small>Excel + Distance</small></div>
-<div class="card" onclick="location.href='/download_students'"><b>📄 Students List Excel</b><small>Download</small></div>
+<div class="main">
+<div class="top">
+<div><b>📘 MATHS - Teacher Panel</b><div style="font-size:11px;color:#666;margin-top:2px">{{teacher}} | 📍 Location 500m ON</div></div>
+<a href="/logout" style="background:#1e40af;color:#fff;padding:7px 12px;border-radius:8px;text-decoration:none;font-size:12px">Logout</a>
 </div>
+
+<!-- VERTICAL LIST - ONE BELOW OTHER -->
+<div class="card" onclick="openQR()">
+<div class="left"><b>📷 Generate QR</b><small>60 sec valid + Location 500m</small></div><div class="right">›</div>
+</div>
+
+<div class="card" onclick="viewStud()">
+<div class="left"><b>👥 View All Students</b><small>Google + Manual list</small></div><div class="right">›</div>
+</div>
+
+<div class="card" onclick="openAdd()">
+<div class="left"><b>➕ Add Student Manually</b><small>Keep roll no TYCS</small></div><div class="right">›</div>
+</div>
+
+<div class="card" onclick="viewAtt()">
+<div class="left"><b>📊 Attendance</b><small>All subjects + Distance</small></div><div class="right">›</div>
+</div>
+
+<div class="card" onclick="location.href='/download_attendance'">
+<div class="left"><b>⬇️ Download Attendance</b><small>Excel file with distance</small></div><div class="right">📥</div>
+</div>
+
+<div class="card" onclick="location.href='/download_students'">
+<div class="left"><b>📄 Students List Excel</b><small>Download full list</small></div><div class="right">📥</div>
+</div>
+
+<p style="text-align:center;color:#cbd5e1;font-size:11px;margin-top:10px">QR Attendance System | VCET</p>
+</div>
+
+<!-- Generate QR Modal -->
 <div class="modal" id="qrModal"><div class="box">
-<h3>Generate QR (Subject wise)</h3>
-Select Subject: <select id="sub"><option>maths</option><option>DBMS</option><option>OS</option><option>CN</option><option>AI</option></select>
-Choose Class: <select id="cls"><option>TYCS</option><option>TYAIML</option><option>TE-A</option><option>TE-B</option></select>
+<h3 style="text-align:center;margin-top:0">Generate QR (Subject wise)</h3>
+<label>Select Subject:</label>
+<select id="sub"><option>maths</option><option>DBMS</option><option>OS</option><option>CN</option><option>AI</option><option>ML</option><option>SE</option></select>
+<label>Choose Class:</label>
+<select id="cls"><option>TYCS</option><option>TYAIML</option><option>TE-A</option><option>TE-B</option><option>SYCS</option></select>
 <div class="loc" id="locStatus">📍 Getting teacher location...</div>
 <button class="btn" onclick="genQR()">🎯 Generate QR (60s + 500m)</button>
-<div id="qrRes" style="display:none;text-align:center;margin-top:12px"><b id="qrLabel"></b><br><img id="qrImg" style="width:220px;margin:8px;border:3px solid #1e40af;border-radius:8px"><br><b id="timer" style="color:red"></b><br><small id="qrLocInfo"></small><br><small style="color:#d32f2f">DON'T SCREENSHOT, SCAN LIVE</small></div>
+<div id="qrRes" style="display:none;text-align:center;margin-top:14px">
+<b id="qrLabel" style="font-size:16px"></b><br>
+<img id="qrImg" style="width:240px;margin:12px;border:4px solid #1e40af;border-radius:12px"><br>
+<b id="timer" style="color:red;font-size:18px"></b><br>
+<small id="qrLocInfo" style="color:#555"></small><br>
+<small style="color:#d32f2f;font-weight:bold">DON'T SCREENSHOT, SCAN LIVE ONLY</small>
+</div>
 <button class="btn" style="background:#666" onclick="closeAll()">Close</button>
 </div></div>
-<div class="modal" id="addModal"><div class="box"><h3>Add Student Manually</h3><input id="an" placeholder="Name"><input id="ar" placeholder="Roll No"><input id="ac" placeholder="Class TYCS"><input id="ae" placeholder="Email"><button class="btn" onclick="saveStud()">Save</button><button class="btn" style="background:#666" onclick="closeAll()">Close</button></div></div>
-<div class="modal" id="studModal"><div class="box" style="max-width:95%;width:95%"><h3>Students</h3><div style="max-height:400px;overflow:auto"><table id="studTable"></table></div><button class="btn" style="background:#666" onclick="closeAll()">Close</button></div></div>
-<div class="modal" id="attModal"><div class="box" style="max-width:95%;width:95%"><h3>Attendance</h3><div style="max-height:400px;overflow:auto"><table id="attTable"></table></div><button class="btn" style="background:#666" onclick="closeAll()">Close</button></div></div>
+
+<div class="modal" id="addModal"><div class="box">
+<h3 style="text-align:center">Add Student Manually</h3>
+<input id="an" placeholder="Full Name">
+<input id="ar" placeholder="Roll No e.g. 71">
+<input id="ac" placeholder="Class e.g. TYCS" value="TYCS">
+<input id="ae" placeholder="Email (optional)">
+<button class="btn" onclick="saveStud()">✅ Save Student</button>
+<button class="btn" style="background:#666" onclick="closeAll()">Close</button>
+</div></div>
+
+<div class="modal" id="studModal"><div class="box" style="max-width:96%;width:96%"><h3 style="text-align:center">All Students</h3><div style="max-height:420px;overflow:auto"><table id="studTable"></table></div><button class="btn" style="background:#666" onclick="closeAll()">Close</button></div></div>
+
+<div class="modal" id="attModal"><div class="box" style="max-width:96%;width:96%"><h3 style="text-align:center">Attendance Records</h3><div style="max-height:420px;overflow:auto"><table id="attTable"></table></div><button class="btn" style="background:#666" onclick="closeAll()">Close</button></div></div>
+
 <script>
 let tLat=0,tLng=0;
-navigator.geolocation.getCurrentPosition(p=>{tLat=p.coords.latitude;tLng=p.coords.longitude;locStatus.innerHTML=`✅ Locked: ${tLat.toFixed(5)}, ${tLng.toFixed(5)}<br><small>500m radius</small>`;}, e=>{locStatus.innerHTML='⚠️ Location denied';});
-function openQR(){qrModal.style.display='flex'}function openAdd(){addModal.style.display='flex'}function closeAll(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none')}
-function genQR(){let fd=new FormData();fd.append('subject',sub.value);fd.append('class',cls.value);fd.append('lat',tLat);fd.append('lng',tLng);fetch('/generate_qr',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{qrRes.style.display='block';qrLabel.innerText=d.subject+' - '+d.class;qrImg.src='data:image/png;base64,'+d.img;qrLocInfo.innerText=`📍 ${tLat.toFixed(4)}, ${tLng.toFixed(4)} | 500m`;let t=60;let iv=setInterval(()=>{t--;timer.innerText='⏳ '+t+'s';if(t<=0){clearInterval(iv);closeAll()}},1000);});}
-function viewStud(){fetch('/get_students').then(r=>r.json()).then(data=>{let h='<tr><th>Name</th><th>Roll</th><th>Class</th><th>Email</th><th>Type</th><th>Del</th></tr>';data.forEach(s=>{h+=`<tr><td>${s.name}</td><td>${s.roll}</td><td>${s.class}</td><td>${s.email}</td><td>${s.type}</td><td><span onclick="delS('${s.email||s.roll}')" style="color:red;cursor:pointer">Delete</span></td></tr>`});studTable.innerHTML=h;studModal.style.display='flex'})}
-function viewAtt(){fetch('/get_attendance').then(r=>r.json()).then(data=>{let h='<tr><th>Date</th><th>Name</th><th>Roll</th><th>Class</th><th>Sub</th><th>Dist</th></tr>';data.slice().reverse().forEach(a=>{h+=`<tr><td>${a.date}</td><td>${a.name}</td><td>${a.roll}</td><td>${a.class}</td><td>${a.subject}</td><td>${a.dist||0}m</td></tr>`});attTable.innerHTML=h;attModal.style.display='flex'})}
-function saveStud(){fetch('/add_student',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:an.value,roll:ar.value,class:ac.value,email:ae.value})}).then(()=>{alert('Saved');closeAll()})}
-function delS(id){if(confirm('Delete?'))fetch('/delete_student/'+id).then(()=>viewStud())}
+navigator.geolocation.getCurrentPosition(p=>{
+  tLat=p.coords.latitude; tLng=p.coords.longitude;
+  document.getElementById('locStatus').innerHTML=`✅ Location Locked<br>${tLat.toFixed(5)}, ${tLng.toFixed(5)}<br><small>Students must be within 500m</small>`;
+}, e=>{ document.getElementById('locStatus').innerHTML='⚠️ Allow Location - Distance check OFF'; });
+
+function openQR(){document.getElementById('qrModal').style.display='flex'}
+function openAdd(){document.getElementById('addModal').style.display='flex'}
+function closeAll(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none')}
+function genQR(){
+  let fd=new FormData();fd.append('subject',sub.value);fd.append('class',cls.value);fd.append('lat',tLat);fd.append('lng',tLng);
+  fetch('/generate_qr',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
+    qrRes.style.display='block';qrLabel.innerText=d.subject+' - '+d.class;
+    qrImg.src='data:image/png;base64,'+d.img;
+    qrLocInfo.innerText=`📍 ${tLat.toFixed(4)}, ${tLng.toFixed(4)} | 500m radius`;
+    let t=60;let iv=setInterval(()=>{t--;timer.innerText='⏳ '+t+'s valid';if(t<=0){clearInterval(iv);closeAll()}},1000);
+  });
+}
+function viewStud(){
+  fetch('/get_students').then(r=>r.json()).then(data=>{
+    let h='<tr><th>Name</th><th>Roll</th><th>Class</th><th>Type</th><th>Del</th></tr>';
+    data.forEach(s=>{h+=`<tr><td>${s.name}</td><td>${s.roll}</td><td>${s.class}</td><td>${s.type}</td><td><span onclick="delS('${s.email||s.roll}')" style="color:red;cursor:pointer">❌</span></td></tr>`});
+    document.getElementById('studTable').innerHTML=h;document.getElementById('studModal').style.display='flex';
+  });
+}
+function viewAtt(){
+  fetch('/get_attendance').then(r=>r.json()).then(data=>{
+    let h='<tr><th>Date</th><th>Name</th><th>Roll</th><th>Sub</th><th>Dist</th></tr>';
+    data.slice().reverse().forEach(a=>{h+=`<tr><td>${a.date}</td><td>${a.name}</td><td>${a.roll}</td><td>${a.subject}</td><td>${a.dist||0}m</td></tr>`});
+    document.getElementById('attTable').innerHTML=h;document.getElementById('attModal').style.display='flex';
+  });
+}
+function saveStud(){
+  fetch('/add_student',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:an.value,roll:ar.value,class:ac.value,email:ae.value})})
+ .then(()=>{alert('Student Added ✅');closeAll();});
+}
+function delS(id){if(confirm('Delete this student?')){fetch('/delete_student/'+id).then(()=>viewStud())}}
 </script>
 </body>
 </html>
