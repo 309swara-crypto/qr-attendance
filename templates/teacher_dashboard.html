@@ -2,110 +2,57 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Teacher Panel</title>
+<title>Teacher Panel - 2 Min + Location</title>
 <style>
-body{margin:0; font-family:Arial; background:#2e4bd2; min-height:100vh}
-.nav{background:white; padding:14px 18px; display:flex; justify-content:space-between; align-items:center}
-.grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:16px; max-width:600px; margin:auto}
-.card{background:white; border-radius:16px; padding:20px 10px; text-align:center; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,.2); transition:.2s}
-.card:hover{transform:translateY(-3px)}
-.modal{position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; justify-content:center; align-items:center; z-index:99}
-.box{background:white; border-radius:16px; padding:20px; width:90%; max-width:420px}
-select,input{width:100%; padding:12px; margin:6px 0; border:1px solid #ddd; border-radius:8px; box-sizing:border-box}
-.btn{width:100%; padding:12px; background:#2e4bd2; color:white; border:none; border-radius:8px; font-weight:700; margin:5px 0; cursor:pointer}
-table{width:100%; background:white; border-collapse:collapse; border-radius:10px; overflow:hidden}
-th{background:#2e4bd2; color:white; padding:10px} td{padding:8px; border-bottom:1px solid #eee; font-size:13px}
-.login-wrap{display:flex; justify-content:center; align-items:center; min-height:100vh}
-.login-card{background:white; width:340px; border-radius:20px; padding:28px; box-shadow:0 10px 30px rgba(0,0,0,.3)}
+body{margin:0;font-family:Arial;background:#2e4bd2;min-height:100vh}
+.nav{background:white;padding:14px 18px;display:flex;justify-content:space-between}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;max-width:600px;margin:auto}
+.card{background:white;border-radius:16px;padding:20px 10px;text-align:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center;z-index:99}
+.box{background:white;border-radius:16px;padding:20px;width:90%;max-width:420px}
+select,input{width:100%;padding:12px;margin:6px 0;border:1px solid #ddd;border-radius:8px;box-sizing:border-box}
+.btn{width:100%;padding:12px;background:#2e4bd2;color:white;border:none;border-radius:8px;font-weight:700;margin:5px 0;cursor:pointer}
+table{width:100%;background:white;border-collapse:collapse;border-radius:10px;overflow:hidden} th{background:#2e4bd2;color:white;padding:10px} td{padding:8px;border-bottom:1px solid #eee;font-size:13px}
+.login-wrap{display:flex;justify-content:center;align-items:center;min-height:100vh}.login-card{background:white;width:340px;border-radius:20px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
 </style>
 </head>
 <body>
-
 {% if is_login %}
-<div class="login-wrap">
-<div class="login-card">
-<h3 style="text-align:center; color:#1a237e">👨‍🏫 Teacher Login</h3>
-<form method="post" action="/teacher_login">
-<input name="uid" placeholder="Teacher ID: dbms" required>
-<input name="pwd" type="password" placeholder="Password: 1234" required>
-<button class="btn" style="background:#1a237e">Login with ID</button>
-</form>
-<hr>
-<button class="btn" style="background:white; border:1px solid #ddd; color:black" onclick="gLogin()">🔵 Login with Google</button>
-<p style="text-align:center; font-size:12px; margin-top:10px"><a href="/">← Back to Home</a> | <a href="/student_login_page">Student?</a></p>
-</div>
-</div>
-<script>
-function gLogin(){
- let email=prompt("Enter Teacher Google Email:");
- if(!email) return;
- fetch('/google_login',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({role:'teacher', email:email})}).then(r=>r.json()).then(d=>location.href=d.redirect);
-}
-</script>
-
+<div class="login-wrap"><div class="login-card">
+<h3 style="text-align:center;color:#1a237e">👨‍🏫 Teacher Login</h3>
+<form method="post" action="/teacher_login"><input name="uid" placeholder="Teacher ID: dbms" required><input name="pwd" type="password" placeholder="Password: 1234" required><button class="btn" style="background:#1a237e">Login with ID</button></form>
+<button class="btn" style="background:white;border:1px solid #ddd;color:black" onclick="gLogin()">🔵 Login with Google</button>
+<p style="text-align:center;font-size:12px"><a href="/">← Back Home</a></p>
+</div></div>
+<script>function gLogin(){let e=prompt("Enter Teacher Google Email:"); if(!e)return; fetch('/google_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'teacher',email:e})}).then(r=>r.json()).then(d=>location.href=d.redirect);}</script>
 {% else %}
 <div class="nav"><b>👨‍🏫 {{teacher.upper()}}</b><a href="/logout">Logout</a></div>
-
 <div class="grid">
-<div class="card" onclick="openGen()"><div style="font-size:28px">📱</div><b>Generate QR</b><br><small>10 sec valid</small></div>
-<div class="card" onclick="viewStud()"><div style="font-size:28px">👥</div><b>View All Students</b><br><small>Google+Manual</small></div>
-<div class="card" onclick="openAdd()"><div style="font-size:28px">➕</div><b>Add Student Manually</b><br><small>Keep list</small></div>
+<div class="card" onclick="openGen()"><div style="font-size:28px">📱</div><b>Generate QR</b><br><small>2 min + Location</small></div>
+<div class="card" onclick="viewStud()"><div style="font-size:28px">👥</div><b>View Students</b><br><small>{{sc}} students</small></div>
+<div class="card" onclick="openAdd()"><div style="font-size:28px">➕</div><b>Add Student</b></div>
 <div class="card" onclick="viewAtt()"><div style="font-size:28px">📊</div><b>Attendance</b><br><small>{{ac}} records</small></div>
-<div class="card" onclick="location.href='/download_attendance'"><div style="font-size:28px">⬇️</div><b>Download Attendance</b><br><small>Excel</small></div>
-<div class="card" onclick="location.href='/students_excel'"><div style="font-size:28px">📄</div><b>Students List Excel</b><br><small>{{sc}} students</small></div>
+<div class="card" onclick="location.href='/download_attendance'"><div style="font-size:28px">⬇️</div><b>Download Attendance</b></div>
+<div class="card" onclick="location.href='/students_excel'"><div style="font-size:28px">📄</div><b>Students Excel</b></div>
 </div>
-
-<div id="genM" class="modal"><div class="box">
-<h3>Generate QR (Subject wise)</h3>
-<select id="cSel">{% for c in classes %}<option>{{c}}</option>{% endfor %}</select>
-<select id="sSel">{% for s in subjects %}<option>{{s}}</option>{% endfor %}</select>
-<button class="btn" onclick="genQR()">Generate QR</button>
-<div id="qrR" style="text-align:center; margin-top:10px"></div>
-<button class="btn" style="background:#ddd; color:black" onclick="closeM()">Close</button>
-</div></div>
-
-<div id="addM" class="modal"><div class="box">
-<h3>Add Student Manually</h3>
-<input id="sn" placeholder="Student Name">
-<input id="sr" placeholder="Roll No">
-<select id="sc">{% for c in classes %}<option>{{c}}</option>{% endfor %}</select>
-<input id="se" placeholder="Email">
-<button class="btn" onclick="addS()">Save Student</button>
-<button class="btn" style="background:#ddd; color:black" onclick="closeM()">Close</button>
-</div></div>
-
-<div id="dataM" class="modal"><div class="box" style="max-width:600px; max-height:80vh; overflow:auto">
-<div id="dataC"></div>
-<button class="btn" style="background:#ddd; color:black" onclick="closeM()">Close</button>
-</div></div>
-
+<div id="genM" class="modal"><div class="box"><h3>Generate QR (2 Min)</h3><select id="cSel">{% for c in classes %}<option>{{c}}</option>{% endfor %}</select><select id="sSel">{% for s in subjects %}<option>{{s}}</option>{% endfor %}</select><p id="tloc" style="font-size:12px;color:blue">📍 Getting Location...</p><button class="btn" onclick="genQR()">Generate QR</button><div id="qrR" style="text-align:center;margin-top:10px"></div><button class="btn" style="background:#ddd;color:black" onclick="closeM()">Close</button></div></div>
+<div id="addM" class="modal"><div class="box"><h3>Add Student Manually</h3><input id="sn" placeholder="Name"><input id="sr" placeholder="Roll"><select id="sc">{% for c in classes %}<option>{{c}}</option>{% endfor %}</select><input id="se" placeholder="Email"><button class="btn" onclick="addS()">Save</button><button class="btn" style="background:#ddd;color:black" onclick="closeM()">Close</button></div></div>
+<div id="dataM" class="modal"><div class="box" style="max-width:600px;max-height:80vh;overflow:auto"><div id="dataC"></div><button class="btn" style="background:#ddd;color:black" onclick="closeM()">Close</button></div></div>
 <script>
-function openGen(){document.getElementById('genM').style.display='flex'}
-function openAdd(){document.getElementById('addM').style.display='flex'}
-function closeM(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none')}
+let teacherLat=0,teacherLng=0;
+navigator.geolocation.getCurrentPosition(p=>{teacherLat=p.coords.latitude; teacherLng=p.coords.longitude; document.getElementById('tloc').innerHTML='✅ Location: '+teacherLat.toFixed(4)+','+teacherLng.toFixed(4);}, e=>{document.getElementById('tloc').innerHTML='❌ Allow Location - Required!';});
+function openGen(){document.getElementById('genM').style.display='flex'} function openAdd(){document.getElementById('addM').style.display='flex'} function closeM(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none')}
 function genQR(){
- let fd=new FormData(); fd.append('class',document.getElementById('cSel').value); fd.append('subject',document.getElementById('sSel').value);
- fetch('/generate_qr',{method:'POST', body:fd}).then(r=>r.json()).then(d=>{
-  document.getElementById('qrR').innerHTML=`<p><b>${d.subject}-${d.class}</b> <span id="tm" style="color:red">10s</span></p><div style="border:2px solid #2e4bd2; padding:10px; display:inline-block; border-radius:12px"><img src="data:image/png;base64,${d.img}" width="220"></div><p>Token: <b>${d.token}</b><br><small>Valid 30 sec + Location</small></p>`;
-  let t=10; let iv=setInterval(()=>{t--; document.getElementById('tm').innerHTML=t+'s'; if(t<=0){clearInterval(iv); closeM();}},1000);
+ if(teacherLat==0){alert('Please Allow Location!');return;}
+ let fd=new FormData(); fd.append('class',cSel.value); fd.append('subject',sSel.value); fd.append('lat',teacherLat); fd.append('lng',teacherLng);
+ fetch('/generate_qr',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
+  qrR.innerHTML=`<p><b>${d.subject}-${d.class}</b> <span id="tm" style="color:red;font-weight:700;background:yellow;padding:4px 8px;border-radius:6px">2:00</span><br><small>📍 ${teacherLat.toFixed(4)},${teacherLng.toFixed(4)}</small></p><div style="border:3px solid #2e4bd2;padding:10px;display:inline-block;border-radius:12px"><img src="data:image/png;base64,${d.img}" width="220"></div><p>Token: <b>${d.token}</b><br><small>Valid 2 mins | 500m radius</small></p>`;
+  let t=120; let iv=setInterval(()=>{let m=Math.floor(t/60); let s=t%60; let el=document.getElementById('tm'); if(el) el.innerHTML=m+':'+(s<10?'0':'')+s; t--; if(t<0){clearInterval(iv); qrR.innerHTML='<h3 style=color:red>❌ QR Expired - Generate New</h3>';}},1000);
  });
 }
-function addS(){
- let fd=new FormData(); fd.append('name',document.getElementById('sn').value); fd.append('roll',document.getElementById('sr').value); fd.append('class',document.getElementById('sc').value); fd.append('email',document.getElementById('se').value);
- fetch('/add_student',{method:'POST', body:fd}).then(()=>{alert('Student Added!'); closeM();});
-}
-function viewStud(){
- fetch('/get_students').then(r=>r.json()).then(d=>{
-  let h=`<h3>Students (${d.length})</h3><table><tr><th>Name</th><th>Roll</th><th>Class</th></tr>`; d.forEach(s=>h+=`<tr><td>${s.name}</td><td>${s.roll}</td><td>${s.class}</td></tr>`); h+='</table>';
-  document.getElementById('dataC').innerHTML=h; document.getElementById('dataM').style.display='flex';
- });
-}
-function viewAtt(){
- fetch('/get_attendance').then(r=>r.json()).then(d=>{
-  let h=`<h3>Attendance (${d.length})</h3><table><tr><th>Name</th><th>Class</th><th>Sub</th><th>Time</th></tr>`; d.forEach(a=>h+=`<tr><td>${a.name}</td><td>${a.class}</td><td>${a.subject}</td><td>${a.time}</td></tr>`); h+='</table>';
-  document.getElementById('dataC').innerHTML=h; document.getElementById('dataM').style.display='flex';
- });
-}
+function addS(){let fd=new FormData(); fd.append('name',sn.value); fd.append('roll',sr.value); fd.append('class',sc.value); fd.append('email',se.value); fetch('/add_student',{method:'POST',body:fd}).then(()=>{alert('Added');closeM();});}
+function viewStud(){fetch('/get_students').then(r=>r.json()).then(d=>{let h=`<h3>Students (${d.length})</h3><table><tr><th>Name</th><th>Roll</th><th>Class</th></tr>`; d.forEach(s=>h+=`<tr><td>${s.name}</td><td>${s.roll}</td><td>${s.class}</td></tr>`); h+='</table>'; dataC.innerHTML=h; dataM.style.display='flex';});}
+function viewAtt(){fetch('/get_attendance').then(r=>r.json()).then(d=>{let h=`<h3>Attendance (${d.length})</h3><table><tr><th>Name</th><th>Roll</th><th>Sub</th><th>Time</th><th>Dist</th></tr>`; d.forEach(a=>h+=`<tr><td>${a.name}</td><td>${a.roll}</td><td>${a.subject}</td><td>${a.time}</td><td>${a.dist||0}m</td></tr>`); h+='</table>'; dataC.innerHTML=h; dataM.style.display='flex';});}
 </script>
 {% endif %}
 </body>
