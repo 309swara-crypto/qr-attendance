@@ -2,37 +2,52 @@
 <html>
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Teacher</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<style>body{margin:0;font-family:Arial;background:#eef2ff}.top{padding:12px;background:#0d47a1;color:#fff;display:flex;justify-content:space-between}.btn{padding:10px 14px;border-radius:10px;border:0;color:#fff;font-weight:700;cursor:pointer}.login-wrap{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:16px}.login-card{background:#fff;padding:22px;border-radius:16px;width:100%;max-width:380px;box-shadow:0 12px 30px rgba(0,0,0,.12)}.login-card input{width:100%;padding:12px;margin:8px 0;border-radius:10px;border:1px solid #ddd}.card{background:#fff;border-radius:14px;padding:14px;margin:12px}</style>
+<title>Teacher Panel</title>
+<style>
+body{margin:0;background:#1e40af;font-family:Arial}
+.top{background:#fff;margin:10px;border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:center}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
+.card{background:#fff;border-radius:14px;padding:16px;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+.card b{font-size:13px}.card small{color:#666;font-size:11px;display:block;margin-top:3px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;justify-content:center;align-items:center;z-index:10;padding:10px}
+.box{background:#fff;width:100%;max-width:400px;border-radius:14px;padding:18px;max-height:90vh;overflow:auto}
+select,input{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc}
+.btn{width:100%;padding:11px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-weight:bold;margin-top:8px;cursor:pointer}
+table{width:100%;font-size:11px;border-collapse:collapse} th{background:#1e40af;color:#fff;padding:6px} td{padding:6px;border-bottom:1px solid #eee}
+.loc{font-size:11px;color:#0d47a1;background:#e3f2fd;padding:6px;border-radius:6px;margin:8px 0}
+</style>
 </head>
 <body>
-{% if is_login %}
-<div class="login-wrap"><div class="login-card">
-<h3 style="text-align:center;color:#0d47a1">👨‍🏫 Teacher Login</h3>
-<form method="post" action="/teacher_login"><input name="uid" placeholder="ID: dbms" required><input name="pwd" type="password" placeholder="Pass: 1234" required><button class="btn" style="background:#0d47a1;width:100%">Login with ID/Pass</button></form>
-<hr><p style="text-align:center;font-size:13px">OR Google</p>
-<div id="g_id_onload" data-client_id="1028258761253-b1ut3e6kdprrdqrqhr8pn9sqgjv9arj1.apps.googleusercontent.com" data-callback="handleTeacherGoogle"></div>
-<div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-width="320" style="display:flex;justify-content:center"></div>
-<p style="text-align:center"><a href="/">← Home</a></p>
-</div></div>
-<script>
-function handleTeacherGoogle(res){const payload=JSON.parse(atob(res.credential.split('.')[1]));fetch('/google_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'teacher',email:payload.email,name:payload.name})}).then(r=>r.json()).then(x=>{location.href=x.redirect});}
-</script>
-{% else %}
-<div class="top"><div><b>👨‍🏫 {{teacher}}</b></div>
- <div><a href="/logout" style="color:#fff">Logout</a></div></div>
-<div class="card">
-<div style="display:flex;gap:8px"><select id="cls" style="flex:1;padding:10px;border-radius:10px">{% for c in classes %}<option>{{c}}</option>{% endfor %}</select><select id="sub" style="flex:1;padding:10px;border-radius:10px">{% for s in subjects %}<option>{{s}}</option>{% endfor %}</select></div>
-<p id="locStatus">📍 Getting location...</p>
-<button class="btn" style="background:#0d47a1;width:100%" onclick="gen()">Generate QR (2 min + 500m)</button>
-<div id="qrBox" style="display:none;text-align:center;margin-top:12px"><img id="qrImg" style="width:230px;border:8px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.2)"><p id="qrInfo"></p><p id="timer" style="color:red;font-weight:bold"></p></div>
+<div class="top"><div><b>MATHS - Teacher Panel</b><div style="font-size:11px;color:#666">{{teacher}} | 📍 Location 500m</div></div><a href="/logout" style="background:#1e40af;color:#fff;padding:6px 10px;border-radius:6px;text-decoration:none;font-size:12px">Logout</a></div>
+<div class="grid">
+<div class="card" onclick="openQR()"><b>📷 Generate QR</b><small>60 sec + Location</small></div>
+<div class="card" onclick="viewStud()"><b>👥 View All Students</b><small>Google + Manual</small></div>
+<div class="card" onclick="openAdd()"><b>➕ Add Student Manually</b><small>Keep roll no</small></div>
+<div class="card" onclick="viewAtt()"><b>📊 Attendance</b><small>All subjects</small></div>
+<div class="card" onclick="location.href='/download_attendance'"><b>⬇️ Download Attendance</b><small>Excel + Distance</small></div>
+<div class="card" onclick="location.href='/download_students'"><b>📄 Students List Excel</b><small>Download</small></div>
 </div>
-<div class="card"><h4>Live: {{ac}} Present / {{sc}} Students <a href="/download_attendance" style="float:right">📥 Excel</a></h4><div id="attList"></div></div>
+<div class="modal" id="qrModal"><div class="box">
+<h3>Generate QR (Subject wise)</h3>
+Select Subject: <select id="sub"><option>maths</option><option>DBMS</option><option>OS</option><option>CN</option><option>AI</option></select>
+Choose Class: <select id="cls"><option>TYCS</option><option>TYAIML</option><option>TE-A</option><option>TE-B</option></select>
+<div class="loc" id="locStatus">📍 Getting teacher location...</div>
+<button class="btn" onclick="genQR()">🎯 Generate QR (60s + 500m)</button>
+<div id="qrRes" style="display:none;text-align:center;margin-top:12px"><b id="qrLabel"></b><br><img id="qrImg" style="width:220px;margin:8px;border:3px solid #1e40af;border-radius:8px"><br><b id="timer" style="color:red"></b><br><small id="qrLocInfo"></small><br><small style="color:#d32f2f">DON'T SCREENSHOT, SCAN LIVE</small></div>
+<button class="btn" style="background:#666" onclick="closeAll()">Close</button>
+</div></div>
+<div class="modal" id="addModal"><div class="box"><h3>Add Student Manually</h3><input id="an" placeholder="Name"><input id="ar" placeholder="Roll No"><input id="ac" placeholder="Class TYCS"><input id="ae" placeholder="Email"><button class="btn" onclick="saveStud()">Save</button><button class="btn" style="background:#666" onclick="closeAll()">Close</button></div></div>
+<div class="modal" id="studModal"><div class="box" style="max-width:95%;width:95%"><h3>Students</h3><div style="max-height:400px;overflow:auto"><table id="studTable"></table></div><button class="btn" style="background:#666" onclick="closeAll()">Close</button></div></div>
+<div class="modal" id="attModal"><div class="box" style="max-width:95%;width:95%"><h3>Attendance</h3><div style="max-height:400px;overflow:auto"><table id="attTable"></table></div><button class="btn" style="background:#666" onclick="closeAll()">Close</button></div></div>
 <script>
-let tLat=0,tLng=0; navigator.geolocation.getCurrentPosition(p=>{tLat=p.coords.latitude;tLng=p.coords.longitude;locStatus.innerHTML=`✅ Locked: ${tLat.toFixed(5)}, ${tLng.toFixed(5)}`});
-function gen(){const fd=new FormData();fd.append('class',cls.value);fd.append('subject',sub.value);fd.append('lat',tLat);fd.append('lng',tLng);fetch('/generate_qr',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{qrBox.style.display='block';qrImg.src='data:image/png;base64,'+d.img;qrInfo.innerText=d.class+' | '+d.subject+' | '+d.token;let l=120;let iv=setInterval(()=>{l--;timer.innerText=l+'s left';if(l<=0){clearInterval(iv);qrBox.style.display='none'}},1000)});}
-setInterval(()=>{fetch('/get_attendance').then(r=>r.json()).then(data=>{let h='<table style="width:100%;font-size:13px"><tr><th>Name</th><th>Roll</th><th>Sub</th><th>Dist</th><th>Time</th></tr>';data.slice(-20).reverse().forEach(a=>{h+=`<tr><td>${a.name}</td><td>${a.roll}</td><td>${a.subject}</td><td>${a.dist}m</td><td>${a.time}</td></tr>`});h+='</table>';attList.innerHTML=h})},3000);
+let tLat=0,tLng=0;
+navigator.geolocation.getCurrentPosition(p=>{tLat=p.coords.latitude;tLng=p.coords.longitude;locStatus.innerHTML=`✅ Locked: ${tLat.toFixed(5)}, ${tLng.toFixed(5)}<br><small>500m radius</small>`;}, e=>{locStatus.innerHTML='⚠️ Location denied';});
+function openQR(){qrModal.style.display='flex'}function openAdd(){addModal.style.display='flex'}function closeAll(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none')}
+function genQR(){let fd=new FormData();fd.append('subject',sub.value);fd.append('class',cls.value);fd.append('lat',tLat);fd.append('lng',tLng);fetch('/generate_qr',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{qrRes.style.display='block';qrLabel.innerText=d.subject+' - '+d.class;qrImg.src='data:image/png;base64,'+d.img;qrLocInfo.innerText=`📍 ${tLat.toFixed(4)}, ${tLng.toFixed(4)} | 500m`;let t=60;let iv=setInterval(()=>{t--;timer.innerText='⏳ '+t+'s';if(t<=0){clearInterval(iv);closeAll()}},1000);});}
+function viewStud(){fetch('/get_students').then(r=>r.json()).then(data=>{let h='<tr><th>Name</th><th>Roll</th><th>Class</th><th>Email</th><th>Type</th><th>Del</th></tr>';data.forEach(s=>{h+=`<tr><td>${s.name}</td><td>${s.roll}</td><td>${s.class}</td><td>${s.email}</td><td>${s.type}</td><td><span onclick="delS('${s.email||s.roll}')" style="color:red;cursor:pointer">Delete</span></td></tr>`});studTable.innerHTML=h;studModal.style.display='flex'})}
+function viewAtt(){fetch('/get_attendance').then(r=>r.json()).then(data=>{let h='<tr><th>Date</th><th>Name</th><th>Roll</th><th>Class</th><th>Sub</th><th>Dist</th></tr>';data.slice().reverse().forEach(a=>{h+=`<tr><td>${a.date}</td><td>${a.name}</td><td>${a.roll}</td><td>${a.class}</td><td>${a.subject}</td><td>${a.dist||0}m</td></tr>`});attTable.innerHTML=h;attModal.style.display='flex'})}
+function saveStud(){fetch('/add_student',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:an.value,roll:ar.value,class:ac.value,email:ae.value})}).then(()=>{alert('Saved');closeAll()})}
+function delS(id){if(confirm('Delete?'))fetch('/delete_student/'+id).then(()=>viewStud())}
 </script>
-{% endif %}
-</body></html>
+</body>
+</html>
