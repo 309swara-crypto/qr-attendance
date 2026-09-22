@@ -1,1 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Panel</title>
+<style>
+body{margin:0; font-family:Arial; background:#2e7d32; min-height:100vh}
+.nav{background:white; padding:14px; display:flex; justify-content:space-between; align-items:center}
+.card{background:white; border-radius:16px; padding:18px; margin:14px auto; max-width:500px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.btn{width:100%; padding:12px; background:#2e7d32; color:white; border:none; border-radius:8px; font-weight:700; margin:5px 0; cursor:pointer}
+table{width:100%; background:white; border-collapse:collapse; border-radius:10px; overflow:hidden; margin:10px auto; max-width:600px}
+th{background:#2e7d32; color:white; padding:10px} td{padding:8px; border-bottom:1px solid #eee; font-size:13px}
+.login-wrap{display:flex; justify-content:center; align-items:center; min-height:100vh}
+.login-card{background:white; width:340px; border-radius:20px; padding:28px; box-shadow:0 10px 30px rgba(0,0,0,.3)}
+input,select{width:100%; padding:12px; margin:6px 0; border:1px solid #ddd; border-radius:8px; box-sizing:border-box}
+</style>
+</head>
+<body>
 
+{% if is_login %}
+<div class="login-wrap">
+<div class="login-card">
+<h3 style="text-align:center; color:#2e7d32">👨‍🎓 Student Login</h3>
+<input id="name" placeholder="Full Name (Swara Patil)">
+<input id="roll" placeholder="Roll No (23_TE_A)">
+<select id="cls"><option>TE-A</option><option>TE-B</option><option>TE-C</option><option>TYCS</option><option>SYCS</option></select>
+<input id="email" placeholder="College Email">
+<button class="btn" onclick="sLogin()">Register & Login</button>
+<hr>
+<button class="btn" style="background:white; border:1px solid #ddd; color:black" onclick="gLogin()">🔵 Register with Google</button>
+<p style="text-align:center; font-size:12px"><a href="/">← Back</a> | <a href="/teacher_login_page">Teacher?</a></p>
+</div>
+</div>
+<script>
+function sLogin(){
+ let n=document.getElementById('name').value; let r=document.getElementById('roll').value;
+ let c=document.getElementById('cls').value; let e=document.getElementById('email').value;
+ if(!n||!r){alert('Enter Name & Roll'); return;}
+ fetch('/student_register',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:n, roll:r, class:c, email:e})}).then(()=>location.href='/student_dashboard');
+}
+function gLogin(){
+ let email=prompt("Enter Student Google Email:");
+ if(!email) return;
+ fetch('/google_login',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({role:'student', email:email})}).then(r=>r.json()).then(d=>location.href=d.redirect);
+}
+</script>
+
+{% else %}
+<div class="nav"><b>Hi {{name}} 👋 ({{roll}})</b><a href="/logout">Logout</a></div>
+
+<div class="card">
+<h3>📷 Scan QR + Location</h3>
+<p id="loc">📍 Getting Location...</p>
+<div id="reader" style="width:280px; margin:auto"></div>
+<input id="token" placeholder="Or Enter Token Manually" style="width:90%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:8px">
+<button class="btn" onclick="mark()">Submit Attendance</button><br>
+<button class="btn" style="background:#e8f5e9; color:#2e7d32" onclick="start()">📷 Start Camera Scanner</button>
+</div>
+
+<div style="max-width:600px; margin:auto; padding:10px">
+<table><tr><th>Subject</th><th>Class</th><th>Time</th></tr>
+{% for a in my_att %}<tr><td>{{a.subject}}</td><td>{{a.class}}</td><td>{{a.time}}</td></tr>{% endfor %}
+</table>
+<p style="color:white; text-align:center">Total Present: {{my_att|length}}</p>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+let lat=0,lng=0;
+navigator.geolocation.getCurrentPosition(p=>{
+ lat=p.coords.latitude; lng=p.coords.longitude;
+ document.getElementById('loc').innerHTML='✅ Location Verified: '+lat.toFixed(4)+','+lng.toFixed(4);
+}, e=>{document.getElementById('loc').innerHTML='❌ Please Allow Location!';});
+
+function start(){
+ const h=new Html5Qrcode("reader");
+ h.start({facingMode:"environment"}, {fps:10, qrbox:250}, (decoded)=>{
+  document.getElementById('token').value=decoded.split('|')[0]; h.stop(); mark();
+ }, (err)=>{});
+}
+function mark(){
+ let token=document.getElementById('token').value;
+ if(!token){alert('Enter Token or Scan QR'); return;}
+ fetch('/mark_attendance',{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({token:token, lat:lat, lng:lng})})
+.then(r=>r.json()).then(d=>{alert(d.msg); location.reload();});
+}
+</script>
+{% endif %}
+</body>
+</html>
