@@ -1,9 +1,93 @@
-<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;background:#1e40af;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:15px;font-family:Arial}.card{background:#fff;width:100%;max-width:380px;border-radius:16px;padding:20px;text-align:center}.btn{width:100%;padding:12px;background:#16a34a;color:#fff;border:0;border-radius:8px;font-weight:bold;margin-top:10px;cursor:pointer}.logout{width:100%;padding:10px;background:#eee;border:0;border-radius:8px;margin-top:10px;cursor:pointer}</style></head><body>
-<div class="card"><h3>Welcome {{name}}</h3><p>Roll: {{roll}}<br>Class: {{sclass}}</p><p id="loc" style="font-size:12px">📍 Fetching location...</p><button class="btn" onclick="mark()">📷 Scan QR & Mark Attendance</button><div id="msg" style="margin-top:10px;font-weight:bold"></div><button class="logout" onclick="location.href='/logout'">Logout</button></div>
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+body{margin:0;background:#1e40af;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:15px;font-family:Arial}
+.card{background:#fff;width:100%;max-width:380px;border-radius:16px;padding:20px;text-align:center}
+.btn{width:100%;padding:12px;background:#16a34a;color:#fff;border:0;border-radius:8px;font-weight:bold;margin-top:10px;cursor:pointer}
+.logout{width:100%;padding:10px;background:#eee;border:0;border-radius:8px;margin-top:10px;cursor:pointer}
+#reader{width:100%;margin-top:15px;border-radius:12px;overflow:hidden;display:none}
+#msg{margin-top:10px;font-weight:bold;font-size:13px}
+</style>
+</head>
+<body>
+<div class="card">
+<h3>Welcome {{name}}</h3>
+<p>Roll: {{roll}}<br>Class: {{sclass}}</p>
+<p id="loc" style="font-size:12px">📍 Fetching location...</p>
+
+<button class="btn" onclick="startScan()">📷 Scan QR & Mark Attendance</button>
+<div id="reader"></div>
+<div id="msg"></div>
+
+<button class="logout" onclick="location.href='/logout'">Logout</button>
+<p style="font-size:10px;color:#888;margin-top:10px">Must be within 500m & QR valid 30 sec</p>
+</div>
+
 <script>
-let lat=0,lon=0;
-navigator.geolocation.getCurrentPosition(p=>{lat=p.coords.latitude;lon=p.coords.longitude;document.getElementById('loc').innerText='📍 '+lat.toFixed(4)+','+lon.toFixed(4)+' ✅';});
-function mark(){
- fetch('/mark_attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:lat,lon:lon})}).then(r=>r.json()).then(d=>{if(d.ok){document.getElementById('msg').innerText='✅ Attendance Marked!';document.getElementById('msg').style.color='green';}else{document.getElementById('msg').innerText='❌ Failed';}});
+let lat=0,lon=0,myClass="{{sclass}}";
+navigator.geolocation.getCurrentPosition(p=>{
+ lat=p.coords.latitude; lon=p.coords.longitude;
+ document.getElementById('loc').innerText='📍 '+lat.toFixed(5)+','+lon.toFixed(5)+' ✅';
+}, e=>{
+ document.getElementById('loc').innerText='📍 Allow location! Using Pune';
+ lat=18.5204; lon=73.8567;
+});
+
+function getDistance(lat1,lon1,lat2,lon2){
+ let R=6371e3;
+ let dLat=(lat2-lat1)*Math.PI/180;
+ let dLon=(lon2-lon1)*Math.PI/180;
+ let a=Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+ return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
-</script></body></html>
+
+let html5QrCode;
+function startScan(){
+ document.getElementById('reader').style.display='block';
+ document.getElementById('msg').innerText='📷 Point camera to Teacher QR...';
+ html5QrCode=new Html5Qrcode("reader");
+ html5QrCode.start({facingMode:"environment"},{fps:10,qrbox:250},
+ (decoded)=>{
+  try{
+   let data=JSON.parse(decoded);
+   let now=Date.now();
+   if(now-data.time>30000){
+    document.getElementById('msg').innerText='❌ QR Expired! Ask teacher to generate again';
+    document.getElementById('msg').style.color='red';
+    html5QrCode.stop();return;
+   }
+   let dist=getDistance(lat,lon,data.lat,data.lon);
+   if(dist>500){
+    document.getElementById('msg').innerText='❌ '+Math.round(dist)+'m away! Must be within 500m';
+    document.getElementById('msg').style.color='red';
+    html5QrCode.stop();return;
+   }
+   if(data.class && data.class!=myClass){
+    document.getElementById('msg').innerText='❌ Wrong class! QR for '+data.class;
+    document.getElementById('msg').style.color='red';
+    html5QrCode.stop();return;
+   }
+   html5QrCode.stop();
+   document.getElementById('msg').innerText='✅ QR Verified! Marking...';
+   fetch('/mark_attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:lat,lon:lon,sub:data.sub})})
+   .then(r=>r.json()).then(d=>{
+    if(d.ok){
+     document.getElementById('msg').innerText='✅ Attendance Marked! '+data.sub;
+     document.getElementById('msg').style.color='green';
+    }else{
+     document.getElementById('msg').innerText='❌ Already marked today';
+     document.getElementById('msg').style.color='red';
+    }
+   });
+  }catch(e){
+   document.getElementById('msg').innerText='❌ Invalid QR! Scan correct QR';
+  }
+ }, (err)=>{}
+ ).catch(err=>{document.getElementById('msg').innerText='❌ Camera error: Allow camera permission';});
+}
+</script>
+</body>
+</html>
