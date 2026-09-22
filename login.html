@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+body{font-family:Arial; text-align:center; padding:30px; background:#f5f5f5;}
+.box{background:white; padding:25px; border-radius:15px; max-width:400px; margin:auto; box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+.btn{margin-top:20px;}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>QR Attendance System</h2>
+<p>Login with  Email to Continue</p>
+
+<div id="g_id_onload"
+     data-client_id="1028743894018-jo9o39j23pvlrtlq4cf6g3r86nvcoibq.apps.googleusercontent.com"
+     data-context="signin"
+     data-callback="handleCredentialResponse">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
+
+<p style="font-size:12px; color:gray; margin-top:15px;">Only college Gmail allowed</p>
+</div>
+
+<script>
+function handleCredentialResponse(response) {
+    // decode JWT
+    const data = JSON.parse(atob(response.credential.split('.')[1]));
+    console.log(data);
+    // Redirect to your backend
+    window.location.href = "/google_form?email=" + encodeURIComponent(data.email) + "&name=" + encodeURIComponent(data.name);
+}
+</script>
+</body>
+</html>
