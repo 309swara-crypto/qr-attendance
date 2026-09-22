@@ -2,68 +2,35 @@
 <html>
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Student</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<title>Student Panel</title>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<style>body{margin:0;font-family:Arial;background:#f5f7ff}.top{padding:12px;background:#2e4bd2;color:#fff;display:flex;justify-content:space-between}.btn{padding:12px;border-radius:10px;border:0;color:#fff;font-weight:700;width:100%;cursor:pointer}.login-wrap{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:16px}.login-card{background:#fff;padding:20px;border-radius:16px;width:100%;max-width:380px}.login-card input,select{width:100%;padding:11px;margin:6px 0;border-radius:10px;border:1px solid #ddd}.card{background:#fff;margin:12px;padding:14px;border-radius:14px}</style>
+<style>
+body{margin:0;background:#1e40af;font-family:Arial}
+.top{background:#fff;margin:10px;border-radius:12px;padding:12px;display:flex;justify-content:space-between}
+.card{background:#fff;margin:10px;border-radius:14px;padding:15px}
+.btn{width:100%;padding:12px;background:#2563eb;color:#fff;border:0;border-radius:10px;font-weight:bold;cursor:pointer;display:flex;justify-content:center;gap:8px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center;z-index:10;padding:10px}
+.box{background:#fff;width:100%;max-width:380px;border-radius:14px;padding:18px;text-align:center}
+.loc{font-size:11px;color:#0d47a1;background:#e3f2fd;padding:6px;border-radius:6px;margin:8px 0}
+</style>
 </head>
 <body>
-{% if is_login %}
-<div class="login-wrap"><div class="login-card">
-<h3 style="text-align:center;color:#2e4bd2">👨‍🎓 Student Login</h3>
-<div id="g_id_onload" data-client_id="<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Student</title>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<style>body{margin:0;font-family:Arial;background:#f5f7ff}.top{padding:12px;background:#2e4bd2;color:#fff;display:flex;justify-content:space-between}.btn{padding:12px;border-radius:10px;border:0;color:#fff;font-weight:700;width:100%;cursor:pointer}.login-wrap{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:16px}.login-card{background:#fff;padding:20px;border-radius:16px;width:100%;max-width:380px}.login-card input,select{width:100%;padding:11px;margin:6px 0;border-radius:10px;border:1px solid #ddd}.card{background:#fff;margin:12px;padding:14px;border-radius:14px}</style>
-</head>
-<body>
-{% if is_login %}
-<div class="login-wrap"><div class="login-card">
-<h3 style="text-align:center;color:#2e4bd2">👨‍🎓 Student Login</h3>
-<div id="g_id_onload" data-client_id="YOUR_CLIENT_ID_HERE.apps.googleusercontent.com" data-callback="handleStudentGoogle"></div>
-<div class="g_id_signin" data-type="standard" data-size="large" data-width="320" style="display:flex;justify-content:center"></div>
-<p style="text-align:center;font-size:11px">New Google users will ask Roll once</p>
-<hr>
-<input id="name" placeholder="Full Name"><input id="roll" placeholder="Roll No"><select id="cls"><option>TE-A</option><option>TE-B</option><option>TE-C</option><option>TYCS</option></select>
-<button class="btn" style="background:#2e4bd2" onclick="sLogin()">Continue Manual</button>
-<p style="text-align:center"><a href="/">← Home</a></p>
-</div></div>
+<div class="top"><div><b>Hi {{name}}! 👋</b><br><small>{{roll}} - {{s_class}} | 📍 Location</small></div><a href="/logout" style="background:#1e40af;color:#fff;padding:6px 10px;border-radius:6px;text-decoration:none;font-size:12px">Logout</a></div>
+<div class="card" style="text-align:center">
+<h3>📷 Scan QR Code</h3>
+<div class="loc" id="locStatus">📍 Getting location...</div>
+<p style="font-size:11px;color:#666">Must be within 500m of teacher</p>
+<button class="btn" onclick="openScan()">📷 Start Scanner</button>
+<p id="res" style="font-weight:bold;margin-top:10px"></p>
+</div>
+<div class="card"><h4>My Attendance ({{my_att|length}})</h4><table style="width:100%;font-size:11px"><tr><th>Subject</th><th>Class</th><th>Date</th><th>Dist</th></tr>{% for a in my_att %}<tr><td>{{a.subject}}</td><td>{{a.class}}</td><td>{{a.date}}</td><td>{{a.dist}}m</td></tr>{% else %}<tr><td colspan="4">No data</td></tr>{% endfor %}</table></div>
+<div class="modal" id="scanModal"><div class="box"><h3>Scan Teacher QR</h3><div id="reader" style="width:100%"></div><div class="loc" id="scanLoc">📍 Checking...</div><p id="scanMsg" style="font-weight:bold"></p><button class="btn" style="background:#666" onclick="closeScan()">Close</button></div></div>
 <script>
-function handleStudentGoogle(res){const p=JSON.parse(atob(res.credential.split('.')[1]));fetch('/google_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'student',email:p.email,name:p.name})}).then(r=>r.json()).then(x=>{if(x.need_details){let roll=prompt('Enter Roll No:');let sclass=prompt('Class TE-A/TE-B:','TE-A');fetch('/google_complete_register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:x.email,name:x.name,roll:roll,class:sclass})}).then(r=>r.json()).then(dd=>location.href=dd.redirect)}else location.href=x.redirect})}
-function sLogin(){const n=name.value,r=roll.value,c=cls.value;if(!n||!r){alert('Fill');return;}fetch('/student_register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,roll:r,class:c})}).then(()=>location.href='/student_dashboard')}
+let sLat=0,sLng=0;
+navigator.geolocation.getCurrentPosition(p=>{sLat=p.coords.latitude;sLng=p.coords.longitude;locStatus.innerHTML=`✅ Your Location: ${sLat.toFixed(5)}, ${sLng.toFixed(5)}`;scanLoc.innerHTML=`✅ Your Location: ${sLat.toFixed(5)}`;}, e=>{locStatus.innerHTML='⚠️ Allow location - required';});
+let qr;
+function openScan(){scanModal.style.display='flex';qr=new Html5Qrcode("reader");qr.start({facingMode:"environment"},{fps:10,qrbox:250},(txt)=>{qr.stop();scanMsg.innerText='⏳ Marking...';fetch('/mark_attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:txt,lat:sLat,lng:sLng})}).then(r=>r.json()).then(d=>{res.innerText=d.msg;scanMsg.innerText=d.msg;if(d.msg.includes('✅')){setTimeout(()=>{closeScan();location.reload()},1500);}});},()=>{});}
+function closeScan(){scanModal.style.display='none';if(qr)try{qr.stop()}catch(e){}}
 </script>
-{% else %}
-<div class="top"><div>👋 {{name}} ({{roll}})</div><a href="/logout" style="color:#fff">Logout</a></div>
-<div class="card"><p id="locStatus">📍 Getting location...</p><button class="btn" style="background:#2e4bd2" onclick="startScan()">📷 Scan QR to Mark</button><div id="reader" style="margin-top:12px"></div><p id="result" style="font-weight:bold;text-align:center"></p></div>
-<div class="card"><h4>My Attendance</h4>{% for a in my_att %}<div style="padding:6px;border-bottom:1px solid #eee">{{a.subject}} - {{a.time}} ({{a.dist}}m)</div>{% else %}<p>No attendance yet</p>{% endfor %}</div>
-<script>
-let sLat=0,sLng=0; navigator.geolocation.getCurrentPosition(p=>{sLat=p.coords.latitude;sLng=p.coords.longitude;locStatus.innerHTML='✅ Location OK'});
-function startScan(){const qr=new Html5Qrcode("reader");qr.start({facingMode:"environment"},{fps:10,qrbox:250},(txt)=>{qr.stop();result.innerText='⏳ Marking...';fetch('/mark_attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:txt,lat:sLat,lng:sLng})}).then(r=>r.json()).then(d=>{result.innerText=d.msg;setTimeout(()=>location.reload(),1500)})},()=>{})}
-</script>
-{% endif %}
-</body></html>" data-callback="handleStudentGoogle"></div>
-<div class="g_id_signin" data-type="standard" data-size="large" data-width="320" style="display:flex;justify-content:center"></div>
-<p style="text-align:center;font-size:11px">New Google users will ask Roll once</p>
-<hr>
-<input id="name" placeholder="Full Name"><input id="roll" placeholder="Roll No"><select id="cls"><option>TE-A</option><option>TE-B</option><option>TE-C</option><option>TYCS</option></select>
-<button class="btn" style="background:#2e4bd2" onclick="sLogin()">Continue Manual</button>
-<p style="text-align:center"><a href="/">← Home</a></p>
-</div></div>
-<script>
-function handleStudentGoogle(res){const p=JSON.parse(atob(res.credential.split('.')[1]));fetch('/google_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'student',email:p.email,name:p.name})}).then(r=>r.json()).then(x=>{if(x.need_details){let roll=prompt('Enter Roll No:');let sclass=prompt('Class TE-A/TE-B:','TE-A');fetch('/google_complete_register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:x.email,name:x.name,roll:roll,class:sclass})}).then(r=>r.json()).then(dd=>location.href=dd.redirect)}else location.href=x.redirect})}
-function sLogin(){const n=name.value,r=roll.value,c=cls.value;if(!n||!r){alert('Fill');return;}fetch('/student_register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,roll:r,class:c})}).then(()=>location.href='/student_dashboard')}
-</script>
-{% else %}
-<div class="top"><div>👋 {{name}} ({{roll}})</div><a href="/logout" style="color:#fff">Logout</a></div>
-<div class="card"><p id="locStatus">📍 Getting location...</p><button class="btn" style="background:#2e4bd2" onclick="startScan()">📷 Scan QR to Mark</button><div id="reader" style="margin-top:12px"></div><p id="result" style="font-weight:bold;text-align:center"></p></div>
-<div class="card"><h4>My Attendance</h4>{% for a in my_att %}<div style="padding:6px;border-bottom:1px solid #eee">{{a.subject}} - {{a.time}} ({{a.dist}}m)</div>{% else %}<p>No attendance yet</p>{% endfor %}</div>
-<script>
-let sLat=0,sLng=0; navigator.geolocation.getCurrentPosition(p=>{sLat=p.coords.latitude;sLng=p.coords.longitude;locStatus.innerHTML='✅ Location OK'});
-function startScan(){const qr=new Html5Qrcode("reader");qr.start({facingMode:"environment"},{fps:10,qrbox:250},(txt)=>{qr.stop();result.innerText='⏳ Marking...';fetch('/mark_attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:txt,lat:sLat,lng:sLng})}).then(r=>r.json()).then(d=>{result.innerText=d.msg;setTimeout(()=>location.reload(),1500)})},()=>{})}
-</script>
-{% endif %}
-</body></html>
+</body>
+</html>
