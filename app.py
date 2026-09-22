@@ -69,10 +69,9 @@ init_db()
 
 @app.route('/')
 def home():
-    # if not logged in, show login page
     if 'email' not in session:
         return render_template('login.html')
-    return render_template('index.html',
+    return render_template('home.html',
         name=session.get('name'),
         roll=session.get('roll'),
         class_name=session.get('class_name'),
@@ -83,24 +82,17 @@ def google_form():
     try:
         email = request.args.get('email')
         name = request.args.get('name')
-
         if not email:
             return "Email missing from Google", 400
-
         session['email'] = email
         session['name'] = name
-
         conn = get_db()
         cur = conn.cursor()
-
-        # Check if student exists
         if DATABASE_URL:
             cur.execute("SELECT roll_no, class_name FROM students WHERE email=%s", (email,))
         else:
             cur.execute("SELECT roll_no, class_name FROM students WHERE email=?", (email,))
-
         row = cur.fetchone()
-
         if row:
             session['roll'] = row[0]
             session['class_name'] = row[1]
@@ -109,7 +101,6 @@ def google_form():
         else:
             conn.close()
             return render_template('google_register.html', email=email, name=name)
-
     except Exception as e:
         print("ERROR in google_form:", e)
         return f"Internal Error: {e}", 500
@@ -120,7 +111,6 @@ def register_student():
     class_name = request.form['class_name']
     email = session.get('email')
     name = session.get('name')
-
     conn = get_db()
     cur = conn.cursor()
     try:
@@ -134,7 +124,6 @@ def register_student():
     except Exception as e:
         print(e)
     conn.close()
-
     session['roll'] = roll
     session['class_name'] = class_name
     return redirect('/')
@@ -143,31 +132,24 @@ def register_student():
 def mark_attendance():
     if 'email' not in session:
         return redirect('/')
-
     now = datetime.now()
     date = now.strftime("%Y-%m-%d")
     time = now.strftime("%H:%M:%S")
-
     conn = get_db()
     cur = conn.cursor()
-
-    # Check if already marked today
     if DATABASE_URL:
         cur.execute("SELECT * FROM attendance WHERE email=%s AND date=%s", (session['email'], date))
     else:
         cur.execute("SELECT * FROM attendance WHERE email=? AND date=?", (session['email'], date))
-
     if cur.fetchone():
         conn.close()
         return "<h3>Already marked today!</h3><a href='/'>Back</a>"
-
     if DATABASE_URL:
         cur.execute("INSERT INTO attendance (roll_no, name, class_name, date, time, email) VALUES (%s,%s,%s,%s,%s,%s)",
                     (session['roll'], session['name'], session['class_name'], date, time, session['email']))
     else:
         cur.execute("INSERT INTO attendance (roll_no, name, class_name, date, time, email) VALUES (?,?,?,?,?,?)",
                     (session['roll'], session['name'], session['class_name'], date, time, session['email']))
-
     conn.commit()
     conn.close()
     return "<h3>Attendance Marked Successfully!</h3><a href='/'>Back to Home</a>"
@@ -176,14 +158,12 @@ def mark_attendance():
 def my_attendance():
     if 'email' not in session:
         return redirect('/')
-
     conn = get_db()
     cur = conn.cursor()
     if DATABASE_URL:
         cur.execute("SELECT date, time FROM attendance WHERE email=%s ORDER BY date DESC", (session['email'],))
     else:
         cur.execute("SELECT date, time FROM attendance WHERE email=? ORDER BY date DESC", (session['email'],))
-
     records = cur.fetchall()
     conn.close()
     return render_template('my_attendance.html', records=records, name=session.get('name'), roll=session.get('roll'))
