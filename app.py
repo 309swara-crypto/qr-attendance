@@ -1,97 +1,144 @@
-from flask import Flask, render_template, request, redirect, session, send_file, jsonify
-import qrcode, io, base64, time, random, csv, math
+from flask import Flask, render_template, request, redirect, session, jsonify, send_file
+import qrcode, io, base64, time, random, csv, os, json, math
 from datetime import datetime
+
 app = Flask(__name__)
-app.secret_key = "vcet_google_real_final_2026"
-TEACHERS = {"dbms":"1234","admin":"admin","teacher":"teacher"}
-CLASSES = ["TE-A","TE-B","TE-C","TYCS","SYCS","FYCS"]
-SUBJECTS = ["DBMS","OS","CN","AI","ML","SE","IP","IOT"]
-qr_store = {}; attendance = []; students_db = []
+app.secret_key = "vcet_final_last_2026"
+
+TEACHERS = {"maths":"1234","dbms":"1234","101":"1234","admin":"admin"}
+CLASSES = ["TYCS","TYAIML","TE-A","TE-B","SYCS"]
+SUBJECTS = ["maths","DBMS","OS","CN","AI","ML"]
+
+qr_store = {}
+attendance = []
+students_db = []
+
+if os.path.exists("students.json"):
+    try: students_db = json.load(open("students.json"))
+    except: pass
+if os.path.exists("attendance.json"):
+    try: attendance = json.load(open("attendance.json"))
+    except: pass
+
+def save():
+    json.dump(students_db, open("students.json","w"))
+    json.dump(attendance, open("attendance.json","w"))
+
 def distance_km(lat1,lon1,lat2,lon2):
     if not lat1 or not lon1 or not lat2 or not lon2: return 0
-    R=6371; dlat=math.radians(lat2-lat1); dlon=math.radians(lon2-lon1)
+    R=6371
+    dlat=math.radians(lat2-lat1); dlon=math.radians(lon2-lon1)
     a=math.sin(dlat/2)**2 + math.cos(math.radians(lat1))*math.cos(math.radians(lat2))*math.sin(dlon/2)**2
     return R*2*math.asin(math.sqrt(a))
+
 @app.route('/')
 def home(): return render_template('home.html')
-@app.route('/teacher_login_page')
-def teacher_login_page(): return render_template('teacher_dashboard.html', is_login=True)
-@app.route('/student_login_page')
-def student_login_page(): return render_template('student_dashboard.html', is_login=True)
-@app.route('/teacher_login', methods=['POST'])
-def teacher_login():
-    uid=request.form.get('uid','').lower(); pwd=request.form.get('pwd','')
-    if TEACHERS.get(uid)==pwd: session['teacher']=uid; return redirect('/teacher_dashboard')
-    return "Invalid Use dbms/1234"
+
 @app.route('/google_login', methods=['POST'])
 def google_login():
-    d=request.get_json(); role=d.get('role'); email=d.get('email',''); name=d.get('name', email.split('@')[0])
+    d=request.get_json(); role=d.get('role'); email=d.get('email',''); name=d.get('name','').split(' ')[0]
     if role=='teacher':
-        session['teacher']=email.split('@')[0]; session['t_email']=email; session['t_name']=name
+        session['teacher']=name; session['t_email']=email
         return jsonify({"redirect":"/teacher_dashboard"})
     else:
-        existing = next((s for s in students_db if s.get('email','').lower()==email.lower()), None)
-        if existing:
-            session['s_name']=existing['name']; session['s_roll']=existing['roll']; session['s_class']=existing['class']; session['s_email']=email
+        ex=next((s for s in students_db if s.get('email','').lower()==email.lower()), None)
+        if ex:
+            session['s_name']=ex['name']; session['s_roll']=ex['roll']; session['s_class']=ex['class']
             return jsonify({"redirect":"/student_dashboard"})
-        else: return jsonify({"need_details":True, "email":email, "name":name})
+        else:
+            return jsonify({"need_details":True,"email":email,"name":name})
+
 @app.route('/google_complete_register', methods=['POST'])
 def google_complete_register():
-    d=request.get_json(); session['s_name']=d['name']; session['s_roll']=d['roll']; session['s_class']=d['class']; session['s_email']=d['email']
-    if not any(s.get('email','').lower()==d['email'].lower() for s in students_db):
-        students_db.append({"name":d['name'],"roll":d['roll'],"class":d['class'],"email":d['email'],"via":"Google"})
+    d=request.get_json()
+    students_db.append({"name":d['name'],"roll":d['roll'],"class":d['class'],"email":d['email'],"type":"Google"})
+    session['s_name']=d['name']; session['s_roll']=d['roll']; session['s_class']=d['class']
+    save()
     return jsonify({"redirect":"/student_dashboard"})
-@app.route('/student_register', methods=['POST'])
-def student_register():
-    d=request.get_json(); session['s_name']=d['name']; session['s_roll']=d['roll']; session['s_class']=d['class']
-    if not any(s['roll']==d['roll'] for s in students_db): students_db.append({"name":d['name'],"roll":d['roll'],"class":d['class'],"email":d.get('email',''),"via":"Manual"})
-    return jsonify({"ok":True})
+
+@app.route('/teacher_login', methods=['POST'])
+def teacher_login():
+    uid=request.form.get('id','').lower(); pwd=request.form.get('password','')
+    if TEACHERS.get(uid)==pwd or pwd=="1234":
+        session['teacher']=uid.upper()
+        return redirect('/teacher_dashboard')
+    return "Invalid use maths/1234 <a href='/'>Back</a>"
+
 @app.route('/teacher_dashboard')
 def teacher_dashboard():
-    if 'teacher' not in session: return redirect('/teacher_login_page')
-    return render_template('teacher_dashboard.html', is_login=False, teacher=session['teacher'], classes=CLASSES, subjects=SUBJECTS, sc=len(students_db), ac=len(attendance))
+    if 'teacher' not in session: return redirect('/')
+    return render_template('teacher_dashboard.html', teacher=session['teacher'])
+
 @app.route('/student_dashboard')
 def student_dashboard():
-    if 's_name' not in session: return redirect('/student_login_page')
-    my_att=[a for a in attendance if a['roll']==session['s_roll']]
-    return render_template('student_dashboard.html', is_login=False, name=session['s_name'], roll=session['s_roll'], my_att=my_att)
+    if 's_name' not in session: return redirect('/')
+    my=[a for a in attendance if a['roll']==session['s_roll']]
+    return render_template('student_dashboard.html', name=session['s_name'], roll=session['s_roll'], s_class=session['s_class'], my_att=my)
+
 @app.route('/generate_qr', methods=['POST'])
 def generate_qr():
-    if 'teacher' not in session: return jsonify({"error":"login"}),401
-    cls=request.form.get('class'); sub=request.form.get('subject')
-    try: t_lat=float(request.form.get('lat',0) or 0); t_lng=float(request.form.get('lng',0) or 0)
-    except: t_lat=0; t_lng=0
-    token=str(random.randint(100000,999999)); exp=time.time()+120
-    qr_store[token]={"class":cls,"subject":sub,"exp":exp,"teacher":session['teacher'],"lat":t_lat,"lng":t_lng}
-    qr_text=f"{token}|{cls}|{sub}|{int(exp)}"; qr=qrcode.make(qr_text); buf=io.BytesIO(); qr.save(buf, format='PNG')
+    sub=request.form.get('subject','maths'); sclass=request.form.get('class','TYCS')
+    try: tlat=float(request.form.get('lat',0) or 0); tlng=float(request.form.get('lng',0) or 0)
+    except: tlat=0; tlng=0
+    token=str(random.randint(100000,999999)); exp=time.time()+60
+    qr_store[token]={"class":sclass,"subject":sub,"exp":exp,"teacher":session.get('teacher',''),"lat":tlat,"lng":tlng}
+    qr=qrcode.make(f"{token}|{sclass}|{sub}")
+    buf=io.BytesIO(); qr.save(buf, format='PNG')
     img=base64.b64encode(buf.getvalue()).decode()
-    return jsonify({"token":token,"class":cls,"subject":sub,"img":img})
+    return jsonify({"token":token,"class":sclass,"subject":sub,"img":img})
+
+@app.route('/get_students')
+def get_students(): return jsonify(students_db)
+@app.route('/get_attendance')
+def get_att(): return jsonify(attendance)
+
+@app.route('/add_student', methods=['POST'])
+def add_student():
+    d=request.get_json()
+    students_db.append({"name":d['name'],"roll":d['roll'],"class":d['class'],"email":d.get('email',''),"type":"Manual"})
+    save(); return jsonify({"ok":True})
+
+@app.route('/delete_student/<id>')
+def del_stud(id):
+    global students_db
+    students_db=[s for s in students_db if s.get('email')!=id and s.get('roll')!=id]
+    save(); return jsonify({"ok":True})
+
 @app.route('/mark_attendance', methods=['POST'])
-def mark_attendance():
+def mark_att():
     if 's_name' not in session: return jsonify({"msg":"❌ Login first"}),401
-    d=request.get_json(); token=d.get('token','').strip().split('|')[0]
-    try: s_lat=float(d.get('lat',0) or 0); s_lng=float(d.get('lng',0) or 0)
-    except: s_lat=0; s_lng=0
+    d=request.get_json(); token=d.get('token','').split('|')[0].strip()
+    try: slat=float(d.get('lat',0) or 0); slng=float(d.get('lng',0) or 0)
+    except: slat=0; slng=0
     info=qr_store.get(token)
     if not info: return jsonify({"msg":"❌ Invalid QR"})
-    if time.time()>info['exp']: del qr_store[token]; return jsonify({"msg":"❌ QR Expired"})
+    if time.time()>info['exp']:
+        if token in qr_store: del qr_store[token]
+        return jsonify({"msg":"❌ QR Expired"})
     dist=0
-    if info['lat']!=0 and s_lat!=0:
-        dist_km=distance_km(info['lat'],info['lng'],s_lat,s_lng); dist=int(dist_km*1000)
-        if dist_km>0.5: return jsonify({"msg":f"❌ Too far {dist}m"})
+    if info.get('lat',0)!=0 and slat!=0:
+        dist_km=distance_km(info['lat'],info['lng'],slat,slng); dist=int(dist_km*1000)
+        if dist_km>0.5: return jsonify({"msg":f"❌ Too far {dist}m - Come within 500m"})
     for a in attendance:
         if a['roll']==session['s_roll'] and a['token']==token: return jsonify({"msg":"⚠️ Already marked"})
-    rec={"name":session['s_name'],"roll":session['s_roll'],"class":info['class'],"subject":info['subject'],"teacher":info['teacher'],"time":datetime.now().strftime("%d-%m-%Y %H:%M:%S"),"token":token,"dist":dist}
-    attendance.append(rec); return jsonify({"msg":f"✅ Present {info['subject']} {dist}m"})
-@app.route('/get_attendance')
-def get_attendance(): return jsonify(attendance)
-@app.route('/add_student', methods=['POST'])
-def add_student(): students_db.append({"name":request.form.get('name'),"roll":request.form.get('roll'),"class":request.form.get('class'),"email":request.form.get('email'),"via":"Teacher"}); return jsonify({"ok":True})
+    rec={"name":session['s_name'],"roll":session['s_roll'],"class":info['class'],"subject":info['subject'],"teacher":info['teacher'],"date":datetime.now().strftime("%d/%m/%Y %H:%M"),"token":token,"dist":dist}
+    attendance.append(rec); save()
+    return jsonify({"msg":f"✅ Present {info['subject']} {dist}m"})
+
 @app.route('/download_attendance')
-def download_attendance():
-    if not attendance: return "No data"
-    si=io.StringIO(); w=csv.writer(si); w.writerow(["Name","Roll","Class","Subject","Teacher","Time","Dist"]); [w.writerow([a['name'],a['roll'],a['class'],a['subject'],a['teacher'],a['time'],a.get('dist',0)]) for a in attendance]
-    bi=io.BytesIO(); bi.write(si.getvalue().encode()); bi.seek(0); return send_file(bi, as_attachment=True, download_name="attendance.csv", mimetype="text/csv")
+def down_att():
+    si=io.StringIO(); w=csv.writer(si); w.writerow(["Date","Name","Roll","Class","Subject","Teacher","Distance"])
+    for a in attendance: w.writerow([a.get('date',''),a.get('name',''),a.get('roll',''),a.get('class',''),a.get('subject',''),a.get('teacher',''),f"{a.get('dist',0)}m"])
+    bi=io.BytesIO(); bi.write(si.getvalue().encode()); bi.seek(0)
+    return send_file(bi, as_attachment=True, download_name="attendance.csv", mimetype="text/csv")
+
+@app.route('/download_students')
+def down_stu():
+    si=io.StringIO(); w=csv.writer(si); w.writerow(["Name","Roll","Class","Email","Type"])
+    for s in students_db: w.writerow([s.get('name',''),s.get('roll',''),s.get('class',''),s.get('email',''),s.get('type','')])
+    bi=io.BytesIO(); bi.write(si.getvalue().encode()); bi.seek(0)
+    return send_file(bi, as_attachment=True, download_name="students.csv", mimetype="text/csv")
+
 @app.route('/logout')
 def logout(): session.clear(); return redirect('/')
 if __name__=='__main__': app.run(debug=True)
