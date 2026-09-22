@@ -18,13 +18,10 @@ def get_db():
 
 def init_db():
     try:
-        conn = get_db()
-        cur = conn.cursor()
+        conn = get_db(); cur = conn.cursor()
         cur.execute("CREATE TABLE IF NOT EXISTS students (roll TEXT PRIMARY KEY, name TEXT, email TEXT, class TEXT, password TEXT)")
         cur.execute("CREATE TABLE IF NOT EXISTS attendance (id SERIAL PRIMARY KEY, roll TEXT, name TEXT, class TEXT, subject TEXT, time TEXT, status TEXT, distance TEXT, qr_id TEXT)")
-        conn.commit()
-        cur.close()
-        conn.close()
+        conn.commit(); cur.close(); conn.close()
     except Exception as e:
         print("INIT ERROR", e)
 
@@ -38,7 +35,7 @@ def dist_m(a,b,c,d):
         x=math.sin(dlat/2)**2+math.cos(math.radians(a))*math.cos(math.radians(c))*math.sin(dlon/2)**2
         return R*2*math.atan2(math.sqrt(x),math.sqrt(1-x))
     except:
-        return 10
+        return 0
 
 @app.route('/')
 def index():
@@ -74,20 +71,18 @@ def add_manual():
         cur.execute("INSERT INTO students (roll,name,email,class,password) VALUES (%s,%s,%s,%s,%s)", (roll,name,f"{roll}@manual.com",class_name,roll))
         conn.commit(); cur.close(); conn.close()
     except Exception as e:
-        return f"Error adding student: {e} <a href='/teacher'>Back</a>"
+        return f"Error: {e} <a href='/teacher'>Back</a>"
     return redirect('/teacher')
 
 @app.route('/reset_db')
 def reset_db():
     try:
         conn=get_db(); cur=conn.cursor()
-        cur.execute("DROP TABLE IF EXISTS attendance")
-        cur.execute("DROP TABLE IF EXISTS students")
-        conn.commit()
+        cur.execute("DROP TABLE IF EXISTS attendance"); cur.execute("DROP TABLE IF EXISTS students"); conn.commit()
         cur.execute("CREATE TABLE students (roll TEXT PRIMARY KEY, name TEXT, email TEXT, class TEXT, password TEXT)")
         cur.execute("CREATE TABLE attendance (id SERIAL PRIMARY KEY, roll TEXT, name TEXT, class TEXT, subject TEXT, time TEXT, status TEXT, distance TEXT, qr_id TEXT)")
         conn.commit(); cur.close(); conn.close()
-        return "DB RESET DONE - Go to <a href='/teacher'>Teacher Dashboard</a> and add students now"
+        return "DB RESET DONE - <a href='/teacher'>Go Back</a>"
     except Exception as e:
         return f"Reset Error: {e}"
 
@@ -116,22 +111,28 @@ def unified_login():
             session['roll']=s[0]; session['name']=s[1]; session['email']=s[2]; session['class']=s[3]; return redirect('/student')
     except Exception as e:
         print(e)
-    return f"Roll {id_roll} not found. Ask teacher to add you first. <a href='/'>Back</a>"
+    return f"Roll {id_roll} not found. <a href='/'>Back</a>"
 
+# LIVE LOCATION QR GENERATION
 @app.route('/generate_qr')
 def gen_qr():
     if 'teacher' not in session:
         return redirect('/')
-    sub=request.args.get('subject','dbms'); qid=datetime.now().strftime("%Y%m%d%H%M%S")
-    qr_store[qid]={"subject":sub,"lat":18.5204,"lon":73.8567,"expiry":datetime.now()+timedelta(minutes=10)}
+    sub=request.args.get('subject','dbms')
+    # TAKE REAL LIVE LOCATION FROM TEACHER PHONE
+    t_lat = float(request.args.get('lat') or 18.5204)
+    t_lon = float(request.args.get('lon') or 73.8567)
+    qid=datetime.now().strftime("%Y%m%d%H%M%S")
+    qr_store[qid]={"subject":sub,"lat":t_lat,"lon":t_lon,"expiry":datetime.now()+timedelta(minutes=10)}
+    print(f"QR {qid} created at {t_lat},{t_lon} by {sub}")
     link=f"{request.host_url}scan/{qid}"; img=qrcode.make(link); b=io.BytesIO(); img.save(b,'PNG'); b.seek(0); b64=base64.b64encode(b.getvalue()).decode()
-    return render_template('generate_qr.html', subject=sub, qr_b64=b64, qr_link=link)
+    return render_template('generate_qr.html', subject=sub, qr_b64=b64, qr_link=link, t_lat=t_lat, t_lon=t_lon)
 
 @app.route('/scan/<qid>')
 def scan(qid):
     info=qr_store.get(qid)
     if not info or datetime.now()>info['expiry']:
-        return "QR Expired <a href='/student'>Back</a>"
+        return "QR Expired - Ask teacher for new QR <a href='/student'>Back</a>"
     return render_template('scan.html', subject=info['subject'], qr_id=qid)
 
 @app.route('/verify_attendance', methods=['POST'])
@@ -140,7 +141,8 @@ def verify():
     info=qr_store.get(qid)
     if not info:
         return "QR Expired <a href='/student'>Back</a>"
-    d=dist_m(info['lat'],info['lon'],lat,lon); st="PRESENT" if d<=50 else "ABSENT"
+    d=dist_m(info['lat'],info['lon'],lat,lon)
+    st="PRESENT" if d<=500 else "ABSENT"
     try:
         conn=get_db(); cur=conn.cursor()
         cur.execute("SELECT id FROM attendance WHERE roll=%s AND qr_id=%s", (session.get('roll'),qid))
