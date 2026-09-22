@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{font-family:Arial;text-align:center;padding:30px;background:#eef2ff}.card{background:white;padding:30px;border-radius:16px;max-width:360px;margin:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)}</style></head>
+<body><div class="card">
+<h1 style="color:{% if status=='PRESENT' %}green{% else %}red{% endif %};font-size:40px;margin:10px 0">{{status}}</h1>
+<h3>Distance: {{dist}} meters</h3>
+<p style="font-size:12px;color:#666">{% if status=='PRESENT' %}You are inside 50m range - Attendance marked{% else %}You are outside 50m - Marked ABSENT{% endif %}</p>
+<br>
+<a href="/student"><button style="padding:12px 25px;background:#1877f2;color:white;border:none;border-radius:8px;font-weight:bold">Go to Dashboard</button></a>
+</div></body></html>
