@@ -1,40 +1,67 @@
 <!DOCTYPE html>
 <html><head><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Teacher Dashboard</title>
+<title>Teacher</title>
 <style>
-body{font-family:Arial;background:#f0f3ff;margin:0;padding:0}
-.header{background:#1a3cd4;color:white;padding:18px;text-align:center;font-size:18px;font-weight:bold}
+body{font-family:Arial;background:#f0f3ff;margin:0}
+.header{background:#1a3cd4;color:white;padding:16px;text-align:center;font-weight:bold}
 .container{padding:15px;max-width:400px;margin:auto}
-.square-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:15px 0}
-.square{background:white;border-radius:16px;padding:20px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.1);height:90px;display:flex;flex-direction:column;justify-content:center}
-.square h2{margin:5px 0;font-size:28px;color:#1a3cd4}
-.btn{width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold;font-size:15px;cursor:pointer;margin:6px 0}
-.blue{background:#1a56ff;color:white}
-.dark{background:#222;color:white}
-.green{background:#12a150;color:white}
-input{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:1px solid #ccc;box-sizing:border-box}
+.square-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.square{background:white;border-radius:16px;padding:18px;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,.1)}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-weight:bold;margin:6px 0}
+.blue{background:#1a56ff;color:white}.dark{background:#222;color:white}.green{background:#12a150;color:white}
+input{width:100%;padding:11px;margin:5px 0;border-radius:8px;border:1px solid #ccc;box-sizing:border-box}
+#tloc{background:#fff8d4;padding:10px;border-radius:8px;font-size:13px;margin:8px 0;text-align:center;border:1px solid #ffd700}
 </style></head>
 <body>
-<div class="header">Welcome {{teacher}}  ✅</div>
+<div class="header">Welcome {{teacher}} Sir ✅</div>
 <div class="container">
 <div class="square-grid">
-<div class="square"><small>👨‍🎓 Students</small><h2>{{sc}}</h2></div>
-<div class="square"><small>📊 Attendance</small><h2>{{ac}}</h2></div>
+<div class="square"><small>Students</small><h2 style="color:#1a3cd4;margin:5px 0">{{sc}}</h2></div>
+<div class="square"><small>Attendance</small><h2 style="color:#1a3cd4;margin:5px 0">{{ac}}</h2></div>
 </div>
-<a href="/generate_qr?subject={{teacher}}"><button class="btn blue">📱 Generate QR</button></a>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-<a href="/view_attendance"><button class="btn dark">📊 View Attendance ({{ac}})</button></a>
-<a href="/student_list"><button class="btn green">👥 Students List</button></a>
+
+<div id="tloc">📍 Getting your LIVE classroom location...<br><small>Please allow GPS permission</small></div>
+
+<button class="btn blue" id="genBtn" onclick="genQR()" disabled>📍 Wait - Getting Live Location...</button>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<a href="/view_attendance"><button class="btn dark">📊 View</button></a>
+<a href="/student_list"><button class="btn green">Students</button></a>
 </div>
-<div style="background:white;border-radius:16px;padding:18px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,.1)">
-<h3 style="margin:0 0 10px 0">➕ Add Student Manually</h3>
+
+<div style="background:white;border-radius:16px;padding:15px;margin:10px 0">
+<h4>Add Student</h4>
 <form action="/add_student_manual" method="POST">
-<input name="roll" placeholder="Roll No (e.g. 12)" required>
-<input name="name" placeholder="Full Name (e.g. Swara Patil)" required>
-<input name="class_name" value="tycs" placeholder="Class">
-<button class="btn blue" type="submit">Add Student Now</button>
+<input name="roll" placeholder="Roll No" required><input name="name" placeholder="Name" required><input name="class_name" value="tycs">
+<button class="btn blue" type="submit">Add</button>
 </form>
 </div>
-<a href="/logout"><button class="btn" style="background:#ffe0e0;color:red">🚪 Logout</button></a>
+<a href="/logout"><button class="btn" style="background:#ffe0e0;color:red">Logout</button></a>
 </div>
+
+<script>
+let tlat=0, tlon=0, got=false;
+function initLoc(){
+ if(navigator.geolocation){
+  navigator.geolocation.getCurrentPosition(p=>{
+   tlat=p.coords.latitude; tlon=p.coords.longitude; got=true;
+   document.getElementById("tloc").innerHTML="✅ <b>LIVE Location Captured</b><br>"+tlat.toFixed(6)+", "+tlon.toFixed(6)+"<br><small>QR will use this location</small>";
+   document.getElementById("tloc").style.background="#d4ffd4";
+   let b=document.getElementById("genBtn"); b.disabled=false; b.innerText="📱 Generate QR with LIVE Location";
+  }, e=>{
+   document.getElementById("tloc").innerHTML="❌ GPS Error: "+e.message+"<br>Using default Pune";
+   tlat=18.5204; tlon=73.8567; got=true;
+   let b=document.getElementById("genBtn"); b.disabled=false; b.innerText="📱 Generate QR (Default Location)";
+  },{enableHighAccuracy:true, timeout:15000});
+ } else {
+  document.getElementById("tloc").innerText="GPS not supported";
+ }
+}
+function genQR(){
+ if(!got){ alert("Wait location"); return; }
+ let sub="{{teacher}}";
+ window.location.href="/generate_qr?subject="+sub+"&lat="+tlat+"&lon="+tlon;
+}
+window.onload=initLoc;
+</script>
 </body></html>
