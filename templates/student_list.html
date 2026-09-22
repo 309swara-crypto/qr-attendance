@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+  <head><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{font-family:Arial;background:#eef2ff;margin:0;padding:15px}table{width:100%;background:white;border-collapse:collapse;border-radius:8px;overflow:hidden;font-size:12px}th{background:#2a4dd0;color:white;padding:8px;text-align:left}td{padding:8px;border-bottom:1px solid #eee}</style></head>
+<body>
+<h3>👥 All Students ({{students|length}})</h3>
+<table><tr><th>Roll</th><th>Name</th><th>Email</th><th>Class</th></tr>
+{% for s in students %}<tr><td>{{s.roll}}</td><td>{{s.name}}</td><td>{{s.email}}</td><td>{{s.class}}</td></tr>{% endfor %}
+</table><br><a href="/teacher">← Back to Teacher Dashboard</a>
+</body></html>
