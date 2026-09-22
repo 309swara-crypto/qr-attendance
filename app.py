@@ -300,6 +300,42 @@ def dl1():
         return send_file(b,as_attachment=True,download_name="attendance.xlsx")
     except Exception as e:
         return f"No data: {e}"
+        @app.route('/reset_db')
+def reset_db():
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("DROP TABLE IF EXISTS attendance")
+        cur.execute("DROP TABLE IF EXISTS students")
+        conn.commit()
+        cur.execute("""
+            CREATE TABLE students (
+                roll TEXT PRIMARY KEY,
+                name TEXT,
+                email TEXT,
+                class TEXT,
+                password TEXT
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE attendance (
+                id SERIAL PRIMARY KEY,
+                roll TEXT,
+                name TEXT,
+                class TEXT,
+                subject TEXT,
+                time TEXT,
+                status TEXT,
+                distance TEXT,
+                qr_id TEXT
+            )
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
+        return "DB RESET DONE - Now go to <a href='/teacher'>Teacher Dashboard</a> and add students"
+    except Exception as e:
+        return f"Reset Error: {e}"
 
 @app.route('/logout')
 def logout():
