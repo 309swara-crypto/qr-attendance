@@ -1,20 +1,54 @@
 <!DOCTYPE html>
-<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
 body{margin:0;background:#1e40af;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:15px;font-family:Arial}
 .card{background:#fff;width:100%;max-width:380px;border-radius:16px;padding:22px}
 input,select{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ccc}
-.btn{width:100%;padding:12px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-weight:bold;margin-top:10px}
-</style></head><body>
+.btn{width:100%;padding:12px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-weight:bold;margin-top:10px;cursor:pointer}
+h3{text-align:center;color:#1e40af}
+.small{font-size:12px;color:#666;text-align:center}
+</style>
+</head>
+<body>
 <div class="card">
-<h3 style="text-align:center">Complete Registration</h3>
-<p style="text-align:center;font-size:13px">Email: <b>{{email}}</b><br>Name: {{name}}</p>
-<input id="roll" placeholder="Roll No e.g. 71">
-<select id="cls"><option>TYCS</option><option>TYAIML</option><option>TE-A</option><option>TE-B</option></select>
+<h3>Complete Registration</h3>
+<p class="small">Google login first time</p>
+<p style="font-size:13px;text-align:center">Email: <b>{{email}}</b><br>Name: <b>{{name}}</b></p>
+
+Roll No<input id="roll" placeholder="Enter Roll No e.g. 71" required>
+Class<select id="cls"><option>TYCS</option><option>TYAIML</option><option>TE-A</option><option>TE-B</option><option>SYCS</option><option>FY</option></select>
+
 <button class="btn" onclick="submitForm()">Submit & Login</button>
+<p id="msg" style="text-align:center;color:red;font-size:13px;margin-top:10px"></p>
+<button onclick="location.href='/'" style="width:100%;padding:10px;background:#eee;border:0;border-radius:8px;margin-top:10px">Back to Home</button>
 </div>
+
 <script>
 function submitForm(){
- fetch('/google_complete_register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:"{{email}}",name:"{{name}}",roll:document.getElementById('roll').value,class:document.getElementById('cls').value})})
-.then(r=>r.json()).then(d=>location.href=d.redirect);
+ let roll=document.getElementById('roll').value.trim();
+ if(!roll){
+  document.getElementById('msg').innerText='Please enter Roll No';
+  return;
+ }
+ document.getElementById('msg').innerText='Saving...';
+ fetch('/google_complete_register',{
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({
+   email:"{{email}}",
+   name:"{{name}}",
+   roll:roll,
+   class:document.getElementById('cls').value
+  })
+ }).then(r=>r.json()).then(d=>{
+  if(d.redirect) location.href=d.redirect;
+  else document.getElementById('msg').innerText='Error saving';
+ }).catch(e=>{
+  document.getElementById('msg').innerText='Server error, try again';
+ });
 }
-</script></body></html>
+</script>
+</body>
+</html>
