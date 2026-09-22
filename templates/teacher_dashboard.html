@@ -1,126 +1,58 @@
 <!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MATHS - Teacher Panel</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teacher Dashboard</title>
 <style>
-*{box-sizing:border-box;font-family:Arial}
-body{margin:0;background:#1e40af;min-height:100vh;padding:15px}
-.panel{background:#fff;width:100%;max-width:420px;margin:20px auto;border-radius:16px;padding:18px}
-h3{margin:0 0 5px;font-size:16px}
-.small{font-size:12px;color:#666;margin-bottom:15px}
-.item{width:100%;padding:14px 16px;border:1px solid #e5e7eb;border-radius:12px;margin-bottom:10px;background:#fff;display:flex;justify-content:space-between;align-items:center;cursor:pointer;text-align:left;font-size:14px}
-.item:hover{background:#f8fafc}
-.item b{display:block;font-size:14px}
-.item span{font-size:11px;color:#666}
-.logout{float:right;background:#f1f5f9;border:1px solid #ddd;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:12px}
-.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);justify-content:center;align-items:center;z-index:99;padding:15px}
-.box{background:#fff;width:100%;max-width:380px;border-radius:16px;padding:20px;max-height:90vh;overflow:auto}
-input,select{width:100%;padding:11px;margin:6px 0;border:1px solid #ccc;border-radius:8px}
-.btn{width:100%;padding:12px;border:0;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:8px}
-.blue{background:#2563eb;color:#fff}
-.gray{background:#e5e7eb;color:#333}
-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
-th,td{border:1px solid #ddd;padding:6px;text-align:left}
-#qrcode{display:flex;justify-content:center;margin:15px 0}
-</style>
-</head>
+body{margin:0;font-family:Arial;background:#eef2ff}
+.top{background:linear-gradient(135deg,#2a4dd0,#1e3c9a);color:white;padding:18px}
+.card{background:white;margin:14px;border-radius:12px;padding:15px;box-shadow:0 4px 10px rgba(0,0,0,.08)}
+.btn{width:100%;padding:12px;margin:6px 0;border:none;border-radius:8px;font-weight:bold;color:white;cursor:pointer}
+.blue{background:#1877f2}.green{background:#28a745}.dark{background:#333}.red{background:#dc3545}
+input{width:100%;padding:11px;margin:6px 0;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+table{width:100%;font-size:12px;border-collapse:collapse;margin-top:8px}
+th{background:#f1f3f5;padding:6px;text-align:left} td{padding:6px;border-bottom:1px solid #eee}
+</style></head>
 <body>
-<div class="panel">
-<div style="display:flex;justify-content:space-between;align-items:center">
-<div><h3>🧑‍🏫 MATHS - Teacher Panel</h3><div class="small">Logged in as: MATHS</div></div>
-<button class="logout" onclick="location.href='/logout'">Logout</button>
+<div class="top">
+<h3 style="margin:0">Welcome {{teacher}} Sir ✅</h3>
+<small>Permanent DB Connected - Postgres</small>
 </div>
 
-<button class="item" onclick="openModal('qrModal')"><div><b>📷 Generate QR</b><span>QR valid 30s, 500m</span></div>›</button>
-<button class="item" onclick="openModal('viewModal')"><div><b>👥 View All Students</b><span>{{students|length}} Students</span></div>›</button>
-<button class="item" onclick="openModal('addModal')"><div><b>➕ Add Student Manually</b><span>Add Roll, Name, Class, Email</span></div>›</button>
-<button class="item" onclick="openModal('attModal')"><div><b>📋 Attendance</b><span>View today's attendance</span></div>›</button>
-<button class="item" onclick="downloadExcel('attendance')"><div><b>⬇️ Download Attendance</b><span>Download with GPS</span></div>📥</button>
-<button class="item" onclick="downloadExcel('students')"><div><b>📄 Students List Excel</b><span>Download all students</span></div>📥</button>
-<div style="text-align:center;font-size:10px;color:#888;margin-top:10px">QR Attendance System v2.0.2</div>
+<div class="card">
+<div class="grid">
+<a href="/generate_qr?subject={{teacher}}"><button class="btn blue">📱 Generate QR</button></a>
+<a href="/student_list"><button class="btn dark">👥 Students ({{sc}})</button></a>
+<a href="/view_attendance"><button class="btn dark">📊 Attendance ({{ac}})</button></a>
+<a href="/download_attendance"><button class="btn green">📥 Download Excel</button></a>
+</div>
 </div>
 
-<div id="qrModal" class="modal"><div class="box">
-<h3>Generate QR (Subject wise)</h3>
-Select Subject<select id="sub"><option>maths</option><option>physics</option><option>chemistry</option><option>TYCS</option></select>
-Choose Class<select id="cls"><option>TYCS</option><option>TYAIML</option><option>TE-A</option><option>TE-B</option><option>SYCS</option></select>
-<div style="background:#e0f2fe;padding:10px;border-radius:8px;font-size:11px;margin-top:8px">📍 Location: <span id="locTxt">Fetching...</span><br>QR valid for 30 seconds & 500m radius</div>
-<button class="btn blue" onclick="generateQR()">Generate QR + 30Sec</button>
-<div id="qrcode"></div>
-<div id="qrTimer" style="text-align:center;font-weight:bold;color:red"></div>
-<button class="btn gray" onclick="closeModal('qrModal')">Close</button>
-</div></div>
-
-<div id="viewModal" class="modal"><div class="box">
-<h3>All Students ({{students|length}})</h3>
-<table><tr><th>Roll</th><th>Name</th><th>Class</th></tr>
-{% for s in students %}<tr><td>{{s[0]}}</td><td>{{s[1]}}</td><td>{{s[2]}}</td></tr>{% endfor %}
-</table>
-<button class="btn gray" onclick="closeModal('viewModal')">Close</button>
-</div></div>
-
-<div id="addModal" class="modal"><div class="box">
-<h3>Add Student Manually</h3>
-<form method="POST" action="/add_student">
-Full Name<input name="name" placeholder="Full Name e.g. Swarup" required>
-Roll No<input name="roll" placeholder="Roll No e.g. 71" required>
-<input type="hidden" name="class" value="TYCS" id="addClassInput">
-<select onchange="document.getElementById('addClassInput').value=this.value"><option>TYCS</option><option>TYAIML</option><option>TE-A</option><option>TE-B</option></select>
-Email (optional)<input name="email" placeholder="Email (optional)">
-<button class="btn blue" type="submit">➕ Save Student</button>
+<div class="card" style="border:2px solid #1877f2">
+<h4 style="margin:0 0 10px 0">➕ Add Student Manually</h4>
+<p style="font-size:11px;color:#666;margin:0 0 8px 0">Teacher can add Roll No, Name, Class directly</p>
+<form action="/add_student_manual" method="POST">
+<input name="roll" placeholder="Roll No (e.g. 12)" required>
+<input name="name" placeholder="Full Name (e.g. Swara Patil)" required>
+<input name="class_name" placeholder="Class (e.g. TYCS)" value="tycs" required>
+<button class="btn blue">Add Student Now</button>
 </form>
-<button class="btn gray" onclick="closeModal('addModal')">Close</button>
-</div></div>
+<small style="color:green">After adding, student can login with Roll as ID and Roll as Password</small>
+</div>
 
-<div id="attModal" class="modal"><div class="box">
-<h3>Today Attendance ({{attendance|length}})</h3>
-<table><tr><th>Roll</th><th>Name</th><th>Time</th><th>Sub</th></tr>
-{% for a in attendance %}<tr><td>{{a[0]}}</td><td>{{a[1]}}</td><td>{{a[4]}}</td><td>{{a[5]}}</td></tr>{% endfor %}
+<div class="card">
+<h4 style="margin:0 0 8px 0">👥 Recent Students ({{sc}} total)</h4>
+<table>
+<tr><th>Roll</th><th>Name</th><th>Class</th></tr>
+{% for s in students %}
+<tr><td>{{s.roll}}</td><td>{{s.name}}</td><td>{{s.class}}</td></tr>
+{% else %}
+<tr><td colspan=3 style="text-align:center;color:#999">No students yet</td></tr>
+{% endfor %}
 </table>
-<button class="btn gray" onclick="closeModal('attModal')">Close</button>
-</div></div>
+<br><a href="/student_list">View Full List</a>
+</div>
 
-<script>
-let lat=0, lon=0;
-navigator.geolocation.getCurrentPosition(p=>{
- lat=p.coords.latitude; lon=p.coords.longitude;
- document.getElementById('locTxt').innerText=lat.toFixed(5)+', '+lon.toFixed(5)+' ✅';
-}, e=>{document.getElementById('locTxt').innerText='Allow location! Using Pune'; lat=18.5204; lon=73.8567;});
-
-function openModal(id){document.getElementById(id).style.display='flex';}
-function closeModal(id){document.getElementById(id).style.display='none'; if(id=='qrModal'){document.getElementById('qrcode').innerHTML=''; document.getElementById('qrTimer').innerText=''; clearInterval(window.qrInt);}}
-
-function generateQR(){
- let sub=document.getElementById('sub').value;
- let cls=document.getElementById('cls').value;
- let data=JSON.stringify({sub:sub,class:cls,lat:lat,lon:lon,time:Date.now()});
- document.getElementById('qrcode').innerHTML='';
- new QRCode(document.getElementById('qrcode'),{text:data,width:220,height:220});
- let sec=30;
- document.getElementById('qrTimer').innerText=sec+'s remaining';
- window.qrInt=setInterval(()=>{
-  sec--; document.getElementById('qrTimer').innerText=sec+'s remaining';
-  if(sec<=0){clearInterval(window.qrInt); document.getElementById('qrcode').innerHTML='<div style="color:red;text-align:center">QR Expired<br>Generate again</div>';}
- },1000);
-}
-
-function downloadExcel(type){
- let csv='';
- if(type=='students'){
-  csv='Roll,Name,Class,Email\n';
-  {% for s in students %}csv+="{{s[0]}},{{s[1]}},{{s[2]}},{{s[3]}}\n";{% endfor %}
- } else {
-  csv='Roll,Name,Class,Date,Time,Subject\n';
-  {% for a in attendance %}csv+="{{a[0]}},{{a[1]}},{{a[2]}},{{a[3]}},{{a[4]}},{{a[5]}}\n";{% endfor %}
- }
- let blob=new Blob([csv],{type:'text/csv'});
- let url=URL.createObjectURL(blob);
- let a=document.createElement('a'); a.href=url; a.download=type+'.csv'; a.click();
-}
-window.onclick=function(e){if(e.target.classList.contains('modal')){e.target.style.display='none';}}
-</script>
-</body>
-</html>
+<div class="card" style="text-align:center">
+<a href="/logout"><button class="btn red">Logout</button></a>
+</div>
+</body></html>
