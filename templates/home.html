@@ -1,95 +1,61 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>QR Attendance</title>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 *{box-sizing:border-box;font-family:Arial}
 body{margin:0;background:#1e40af;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:15px}
-.card{background:#fff;width:100%;max-width:380px;border-radius:16px;padding:22px;box-shadow:0 10px 25px rgba(0,0,0,.3)}
-h3{text-align:center;margin:0 0 15px;font-size:18px}
-.row{display:flex;gap:30px;margin:10px 0 15px;font-size:14px;justify-content:center}
-input{width:100%;padding:12px;margin:6px 0 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px}
-.btn{width:100%;padding:12px;border:0;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:8px;font-size:14px;display:flex;justify-content:center;align-items:center;gap:8px}
+.card{background:#fff;width:100%;max-width:380px;border-radius:16px;padding:22px}
+h3{text-align:center;color:#1e40af}
+.row{display:flex;gap:30px;justify-content:center;margin:10px 0}
+input{width:100%;padding:12px;margin:6px 0 12px;border:1px solid #ccc;border-radius:8px}
+.btn{width:100%;padding:12px;border:0;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:8px;display:flex;justify-content:center;gap:8px}
 .blue{background:#2563eb;color:#fff}
-.white{background:#fff;color:#333;border:1px solid #d1d5db}
-.note{font-size:11px;color:#666;text-align:center;margin-top:12px;line-height:1.4}
-#g_id_onload{position:fixed;top:60px;left:0;right:0;display:flex;justify-content:center;z-index:999}
+.white{background:#fff;color:#333;border:1px solid #ccc}
+.note{font-size:11px;color:#666;text-align:center;margin-top:10px}
 </style>
 </head>
 <body>
 <div class="card">
-<h3 style="color:#1e40af">📘 QR Attendance</h3>
-<form method="POST" action="/login" id="mainForm">
+<h3>📘 QR Attendance</h3>
+<form method="POST" action="/login">
 <div class="row">
 <label><input type="radio" name="role" value="teacher" checked> Teacher</label>
 <label><input type="radio" name="role" value="student"> Student</label>
 </div>
-<span style="font-size:13px;font-weight:bold">ID No</span>
-<input name="id" id="uid" placeholder="Enter ID No e.g. maths" required>
-<span style="font-size:13px;font-weight:bold">Password</span>
-<input name="password" id="pwd" type="password" placeholder="Enter Password e.g. 1234" required>
+ID No<input name="id" placeholder="Enter ID No e.g. maths" required>
+Password<input name="password" placeholder="Enter Password e.g. 1234" required>
 <button class="btn blue" type="submit">Login with ID</button>
 </form>
-
-<button class="btn white" onclick="studentGoogle()"><img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> Student - Register with Google</button>
-<button class="btn white" onclick="teacherGoogle()"><img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" width="18"> Teacher - Login with Google</button>
-
-<div class="note">Teacher: maths / 1234<br>Student: Use Roll No (e.g. 71) + Location 500m ON</div>
-
-<div id="g_id_onload"
-data-client_id="1028743894018-jo9o39j23pvlrtlq4cf6g3r86nvcoibq.apps.googleusercontent.com"
-data-callback="handleCred"
-data-auto_prompt="false">
+<button class="btn white" onclick="google('student')">Student - Register with Google</button>
+<button class="btn white" onclick="google('teacher')">Teacher - Login with Google</button>
+<div class="note">Teacher: maths / 1234<br>Student: Roll No + Location 500m</div>
+<div id="gbtn" style="display:flex;justify-content:center;margin-top:10px"></div>
 </div>
-<div id="g_button" style="display:flex;justify-content:center;margin-top:10px"></div>
-</div>
-
 <script>
-// Placeholder change
-document.querySelectorAll('input[name="role"]').forEach(r=>{
- r.addEventListener('change',()=>{
-  let role=document.querySelector('input[name="role"]:checked').value;
-  if(role=='student'){
-    document.getElementById('uid').placeholder='Enter Roll No e.g. 71';
-    document.getElementById('pwd').placeholder='Enter Your Name';
-    document.getElementById('pwd').type='text';
-  }else{
-    document.getElementById('uid').placeholder='Enter ID No e.g. maths';
-    document.getElementById('pwd').placeholder='Enter Password e.g. 1234';
-    document.getElementById('pwd').type='password';
-  }
- });
+let curRole='teacher';
+function google(role){
+curRole=role;
+google.accounts.id.initialize({client_id:"1028743894018-jo9o39j23pvlrtlq4cf6g3r86nvcoibq.apps.googleusercontent.com",callback:handle});
+google.accounts.id.renderButton(document.getElementById('gbtn'),{theme:"outline",size:"large",width:320});
+google.accounts.id.prompt();
+}
+function handle(res){
+const p=JSON.parse(atob(res.credential.split('.')[1]));
+fetch('/google_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:curRole,email:p.email,name:p.name})})
+.then(r=>r.json()).then(x=>{
+if(x.need_details) location.href=`/google_form?email=${encodeURIComponent(x.email)}&name=${encodeURIComponent(x.name)}`;
+else location.href=x.redirect;
 });
-
-let currentRole='teacher';
-function teacherGoogle(){currentRole='teacher'; triggerGoogle();}
-function studentGoogle(){currentRole='student'; triggerGoogle();}
-
-function triggerGoogle(){
-  google.accounts.id.initialize({
-    client_id:"1028743894018-jo9o39j23pvlrtlq4cf6g3r86nvcoibq.apps.googleusercontent.com",
-    callback:handleCred
-  });
-  // This shows button center - visible on phone
-  google.accounts.id.renderButton(document.getElementById("g_button"),{theme:"outline",size:"large",width:300,text:"continue_with"});
-  google.accounts.id.prompt(); // also prompt
 }
-
-function handleCred(res){
-  const p=JSON.parse(atob(res.credential.split('.')[1]));
-  fetch('/google_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:currentRole,email:p.email,name:p.name})})
- .then(r=>r.json()).then(x=>{
-    if(x.need_details){
-      // OPEN NEW TAB - phone visible issue fixed
-      let url=`/google_form?email=${encodeURIComponent(x.email)}&name=${encodeURIComponent(x.name)}`;
-      window.open(url,'_blank'); // new tab opens
-      // also redirect current
-      location.href=url;
-    }else location.href=x.redirect;
-  });
-}
+document.querySelectorAll('input[name="role"]').forEach(r=>r.addEventListener('change',e=>{
+const isStu=e.target.value=='student';
+document.querySelector('input[name="id"]').placeholder=isStu?'Enter Roll No e.g. 71':'Enter ID No e.g. maths';
+document.querySelector('input[name="password"]').placeholder=isStu?'Enter Your Name':'Enter Password e.g. 1234';
+}));
 </script>
 </body>
 </html>
