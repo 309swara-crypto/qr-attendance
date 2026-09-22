@@ -129,6 +129,17 @@ def student_dashboard():
     if not session.get('student_roll'):
         return redirect('/')
     return render_template('student_dashboard.html', roll=session.get('student_roll'), name=session.get('student_name'), sclass=session.get('student_class'))
+    @app.route('/student_dashboard')
+def student_dashboard():
+    if not session.get('student_roll'):
+        return redirect('/')
+    roll=session.get('student_roll')
+    con=sqlite3.connect(DB)
+    c=con.cursor()
+    c.execute("SELECT date,time,subject FROM attendance WHERE roll=? ORDER BY id DESC", (roll,))
+    my_att=c.fetchall()
+    con.close()
+    return render_template('student_dashboard.html', roll=roll, name=session.get('student_name'), sclass=session.get('student_class'), attendance=my_att)
 
 @app.route('/mark_attendance', methods=['POST'])
 def mark_att():
