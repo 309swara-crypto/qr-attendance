@@ -1,57 +1,29 @@
 <!DOCTYPE html>
-<html><head><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mark Attendance</title>
-<style>
-body{font-family:Arial;background:#f0f3ff;margin:0;padding:15px;text-align:center}
-.card{background:white;border-radius:16px;padding:20px;max-width:380px;margin:20px auto;box-shadow:0 4px 15px rgba(0,0,0,.15)}
-.btn{width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold;font-size:16px;margin:8px 0;cursor:pointer}
-.blue{background:#1a56ff;color:white}
-.green{background:#12a150;color:white}
-.gray{background:#eee;color:#333}
-#status{padding:10px;border-radius:8px;margin:10px 0;font-size:14px}
-</style></head>
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Verify</title>
+<style>body{font-family:Arial;background:#f0f3ff;text-align:center;padding:15px}.card{background:white;border-radius:16px;padding:20px;max-width:380px;margin:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)}.btn{width:100%;padding:14px;border-radius:10px;border:none;font-weight:bold;margin:6px 0}.green{background:#12a150;color:white}.blue{background:#1a56ff;color:white}</style></head>
 <body>
 <div class="card">
-<h2>📚 {{subject}} Attendance</h2>
-<div id="status" class="gray">📍 Getting your location...</div>
-<p style="font-size:13px">Roll: <b>{{session.roll}}</b> | Name: <b>{{session.name}}</b></p>
-
-<form action="/verify_attendance" method="POST" id="attendForm">
+<h2>📚 {{subject}} - Mark Attendance</h2>
+<p id="st" style="background:#eee;padding:10px;border-radius:8px">📍 Getting GPS...</p>
+<p>Roll: <b>{{session.roll}}</b> | {{session.name}}</p>
+<form action="/verify_attendance" method="POST">
 <input type="hidden" name="qr_id" value="{{qr_id}}">
-<input type="hidden" name="lat" id="lat">
-<input type="hidden" name="lon" id="lon">
-<button type="submit" class="btn green" id="markBtn" disabled>📍 Wait - Getting Location...</button>
+<input type="hidden" id="lat" name="lat"><input type="hidden" id="lon" name="lon">
+<button id="btn" class="btn green" disabled>Getting Location...</button>
 </form>
-
-<p style="font-size:11px;color:#666">You must be within 50m of classroom to be marked PRESENT</p>
-<a href="/student"><button class="btn blue">← Back to Student Dashboard</button></a>
+<a href="/student"><button class="btn blue">Back</button></a>
 </div>
-
 <script>
-function updateStatus(msg, color){
-  let el = document.getElementById("status");
-  el.innerText = msg;
-  el.style.background = color;
-}
-if(navigator.geolocation){
-  navigator.geolocation.getCurrentPosition(function(pos){
-    document.getElementById("lat").value = pos.coords.latitude;
-    document.getElementById("lon").value = pos.coords.longitude;
-    updateStatus("✅ Location Captured: " + pos.coords.latitude.toFixed(5) + ", " + pos.coords.longitude.toFixed(5), "#d4ffd4");
-    let btn = document.getElementById("markBtn");
-    btn.disabled = false;
-    btn.innerText = "✅ Mark My Attendance Now";
-  }, function(err){
-    updateStatus("❌ Location Error: " + err.message + " - Please enable GPS", "#ffd4d4");
-    // Allow anyway with default
-    document.getElementById("lat").value = "18.5204";
-    document.getElementById("lon").value = "73.8567";
-    let btn = document.getElementById("markBtn");
-    btn.disabled = false;
-    btn.innerText = "⚠️ Mark Attendance (Location Failed)";
-  }, {enableHighAccuracy:true, timeout:10000});
-} else {
-  updateStatus("❌ Geolocation not supported", "#ffd4d4");
-}
+navigator.geolocation.getCurrentPosition(p=>{
+ document.getElementById("lat").value=p.coords.latitude;
+ document.getElementById("lon").value=p.coords.longitude;
+ document.getElementById("st").innerText="✅ Location OK";
+ document.getElementById("st").style.background="#d4ffd4";
+ let b=document.getElementById("btn"); b.disabled=false; b.innerText="✅ Mark PRESENT Now";
+}, e=>{
+ document.getElementById("lat").value="18.5204"; document.getElementById("lon").value="73.8567";
+ document.getElementById("st").innerText="GPS Failed - Using Default";
+ let b=document.getElementById("btn"); b.disabled=false; b.innerText="Mark Anyway";
+},{enableHighAccuracy:true});
 </script>
 </body></html>
