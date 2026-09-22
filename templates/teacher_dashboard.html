@@ -3,58 +3,38 @@
 <title>Teacher Dashboard</title>
 <style>
 body{font-family:Arial;background:#f0f3ff;margin:0;padding:0}
-.header{background:#1a3cd4;color:white;padding:15px;text-align:center}
+.header{background:#1a3cd4;color:white;padding:18px;text-align:center;font-size:18px;font-weight:bold}
 .container{padding:15px;max-width:400px;margin:auto}
-.card{background:white;border-radius:16px;padding:18px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,.1);text-align:center}
 .square-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:15px 0}
 .square{background:white;border-radius:16px;padding:20px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.1);height:90px;display:flex;flex-direction:column;justify-content:center}
 .square h2{margin:5px 0;font-size:28px;color:#1a3cd4}
 .btn{width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold;font-size:15px;cursor:pointer;margin:6px 0}
 .blue{background:#1a56ff;color:white}
-.green{background:#12a150;color:white}
 .dark{background:#222;color:white}
-input,select{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:1px solid #ccc;box-sizing:border-box}
+.green{background:#12a150;color:white}
+input{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:1px solid #ccc;box-sizing:border-box}
 </style></head>
 <body>
-<div class="header"><b>Welcome {{teacher}} Sir ✅</b><br><small>Permanent DB Connected - Postgres</small></div>
+<div class="header">Welcome {{teacher}}  ✅</div>
 <div class="container">
-
 <div class="square-grid">
 <div class="square"><small>👨‍🎓 Students</small><h2>{{sc}}</h2></div>
 <div class="square"><small>📊 Attendance</small><h2>{{ac}}</h2></div>
 </div>
-
-<a href="/generate_qr?subject=dbms"><button class="btn blue">📱 Generate QR</button></a>
-
+<a href="/generate_qr?subject={{teacher}}"><button class="btn blue">📱 Generate QR</button></a>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
 <a href="/view_attendance"><button class="btn dark">📊 View Attendance ({{ac}})</button></a>
 <a href="/student_list"><button class="btn green">👥 Students List</button></a>
 </div>
-
-<div class="card" style="text-align:left">
-<h3 style="margin:0 0 5px 0">➕ Add Student Manually</h3>
-<p style="font-size:11px;color:#666;margin:0 0 10px 0">Teacher can add Roll No, Name, Class directly</p>
+<div style="background:white;border-radius:16px;padding:18px;margin:12px 0;box-shadow:0 4px 12px rgba(0,0,0,.1)">
+<h3 style="margin:0 0 10px 0">➕ Add Student Manually</h3>
 <form action="/add_student_manual" method="POST">
 <input name="roll" placeholder="Roll No (e.g. 12)" required>
 <input name="name" placeholder="Full Name (e.g. Swara Patil)" required>
-<input name="class_name" value="tycs" placeholder="Class e.g. TYCS">
+<input name="class_name" value="tycs" placeholder="Class">
 <button class="btn blue" type="submit">Add Student Now</button>
 </form>
-<p style="font-size:10px;color:#888;text-align:center">After adding, student can login with Roll as ID and Roll as Password</p>
 </div>
-
-<div class="card">
-<h4 style="margin:0 0 10px 0;text-align:left">📋 Recent Students ({{students|length}} total)</h4>
-{% if students %}
-{% for s in students %}
-<div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #eee"><span>{{s[0]}} - {{s[1]}}</span><span style="color:#666">{{s[3]}}</span></div>
-{% endfor %}
-{% else %}
-<p style="font-size:12px;color:#999">No students yet</p>
-{% endif %}
-<a href="/student_list" style="font-size:12px">View Full List</a>
-</div>
-
 <a href="/logout"><button class="btn" style="background:#ffe0e0;color:red">🚪 Logout</button></a>
 </div>
 </body></html>
