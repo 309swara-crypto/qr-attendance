@@ -1,10 +1,40 @@
 <!DOCTYPE html>
 <html><head><meta name="viewport" content="width=device-width, initial-scale=1">
-<style>body{font-family:Arial;text-align:center;padding:20px;background:#eef2ff}.card{background:white;padding:20px;border-radius:16px;max-width:400px;margin:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)}img{width:100%;max-width:300px;border:1px solid #ddd;padding:10px;border-radius:12px}</style></head>
-<body><div class="card">
-<h3>📱 {{subject}} QR Code</h3>
-<img src="data:image/png;base64,{{qr_b64}}">
-<p style="word-break:break-all;font-size:11px;color:#666">{{qr_link}}</p>
-<p style="font-size:12px">⏰ Valid: 10 Minutes<br>📍 Range: 50 Meters</p>
-<a href="/teacher"><button style="padding:10px 20px;background:#1877f2;color:white;border:none;border-radius:8px">Back to Dashboard</button></a>
-</div></body></html>
+<title>QR Code</title>
+<style>
+body{font-family:Arial;background:#f0f3ff;margin:0;padding:15px;text-align:center}
+.card{background:white;border-radius:16px;padding:20px;max-width:380px;margin:20px auto;box-shadow:0 4px 15px rgba(0,0,0,.15)}
+#timer{font-size:32px;font-weight:bold;color:red;margin:10px 0}
+.qr-box{border:3px dashed #1a56ff;padding:10px;border-radius:12px;margin:15px 0}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>Subject: {{subject}}</h2>
+<div id="timer">10:00</div>
+<p style="font-size:12px;color:#666">QR expires in 10 minutes - Students must scan within 50m</p>
+<div class="qr-box">
+<img src="data:image/png;base64,{{qr_b64}}" style="width:250px;height:250px">
+</div>
+<p style="font-size:10px;word-break:break-all;color:#333">{{qr_link}}</p>
+<a href="/generate_qr?subject={{subject}}"><button style="width:100%;padding:12px;background:#1a56ff;color:white;border:none;border-radius:8px;font-weight:bold;margin-top:10px">🔄 Generate New QR</button></a>
+<a href="/teacher"><button style="width:100%;padding:12px;background:#222;color:white;border:none;border-radius:8px;margin-top:8px">← Back to Dashboard</button></a>
+</div>
+
+<script>
+let time = 600; // 10 minutes
+let timerEl = document.getElementById("timer");
+let interval = setInterval(()=>{
+  let m = Math.floor(time/60);
+  let s = time%60;
+  timerEl.innerText = `${m}:${s<10?'0':''}${s}`;
+  time--;
+  if(time < 0){
+    clearInterval(interval);
+    timerEl.innerText = "EXPIRED ❌";
+    timerEl.style.color = "black";
+    alert("QR Expired! Generate new QR");
+  }
+},1000);
+</script>
+</body></html>
