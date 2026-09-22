@@ -1,36 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Student Panel</title>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<style>
-body{margin:0;background:#1e40af;font-family:Arial}
-.top{background:#fff;margin:10px;border-radius:12px;padding:12px;display:flex;justify-content:space-between}
-.card{background:#fff;margin:10px;border-radius:14px;padding:15px}
-.btn{width:100%;padding:12px;background:#2563eb;color:#fff;border:0;border-radius:10px;font-weight:bold;cursor:pointer;display:flex;justify-content:center;gap:8px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center;z-index:10;padding:10px}
-.box{background:#fff;width:100%;max-width:380px;border-radius:14px;padding:18px;text-align:center}
-.loc{font-size:11px;color:#0d47a1;background:#e3f2fd;padding:6px;border-radius:6px;margin:8px 0}
-</style>
-</head>
-<body>
-<div class="top"><div><b>Hi {{name}}! 👋</b><br><small>{{roll}} - {{s_class}} | 📍 Location</small></div><a href="/logout" style="background:#1e40af;color:#fff;padding:6px 10px;border-radius:6px;text-decoration:none;font-size:12px">Logout</a></div>
-<div class="card" style="text-align:center">
-<h3>📷 Scan QR Code</h3>
-<div class="loc" id="locStatus">📍 Getting location...</div>
-<p style="font-size:11px;color:#666">Must be within 500m of teacher</p>
-<button class="btn" onclick="openScan()">📷 Start Scanner</button>
-<p id="res" style="font-weight:bold;margin-top:10px"></p>
-</div>
-<div class="card"><h4>My Attendance ({{my_att|length}})</h4><table style="width:100%;font-size:11px"><tr><th>Subject</th><th>Class</th><th>Date</th><th>Dist</th></tr>{% for a in my_att %}<tr><td>{{a.subject}}</td><td>{{a.class}}</td><td>{{a.date}}</td><td>{{a.dist}}m</td></tr>{% else %}<tr><td colspan="4">No data</td></tr>{% endfor %}</table></div>
-<div class="modal" id="scanModal"><div class="box"><h3>Scan Teacher QR</h3><div id="reader" style="width:100%"></div><div class="loc" id="scanLoc">📍 Checking...</div><p id="scanMsg" style="font-weight:bold"></p><button class="btn" style="background:#666" onclick="closeScan()">Close</button></div></div>
+<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;background:#1e40af;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:15px;font-family:Arial}.card{background:#fff;width:100%;max-width:380px;border-radius:16px;padding:20px;text-align:center}.btn{width:100%;padding:12px;background:#16a34a;color:#fff;border:0;border-radius:8px;font-weight:bold;margin-top:10px;cursor:pointer}.logout{width:100%;padding:10px;background:#eee;border:0;border-radius:8px;margin-top:10px;cursor:pointer}</style></head><body>
+<div class="card"><h3>Welcome {{name}}</h3><p>Roll: {{roll}}<br>Class: {{sclass}}</p><p id="loc" style="font-size:12px">📍 Fetching location...</p><button class="btn" onclick="mark()">📷 Scan QR & Mark Attendance</button><div id="msg" style="margin-top:10px;font-weight:bold"></div><button class="logout" onclick="location.href='/logout'">Logout</button></div>
 <script>
-let sLat=0,sLng=0;
-navigator.geolocation.getCurrentPosition(p=>{sLat=p.coords.latitude;sLng=p.coords.longitude;locStatus.innerHTML=`✅ Your Location: ${sLat.toFixed(5)}, ${sLng.toFixed(5)}`;scanLoc.innerHTML=`✅ Your Location: ${sLat.toFixed(5)}`;}, e=>{locStatus.innerHTML='⚠️ Allow location - required';});
-let qr;
-function openScan(){scanModal.style.display='flex';qr=new Html5Qrcode("reader");qr.start({facingMode:"environment"},{fps:10,qrbox:250},(txt)=>{qr.stop();scanMsg.innerText='⏳ Marking...';fetch('/mark_attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:txt,lat:sLat,lng:sLng})}).then(r=>r.json()).then(d=>{res.innerText=d.msg;scanMsg.innerText=d.msg;if(d.msg.includes('✅')){setTimeout(()=>{closeScan();location.reload()},1500);}});},()=>{});}
-function closeScan(){scanModal.style.display='none';if(qr)try{qr.stop()}catch(e){}}
-</script>
-</body>
-</html>
+let lat=0,lon=0;
+navigator.geolocation.getCurrentPosition(p=>{lat=p.coords.latitude;lon=p.coords.longitude;document.getElementById('loc').innerText='📍 '+lat.toFixed(4)+','+lon.toFixed(4)+' ✅';});
+function mark(){
+ fetch('/mark_attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:lat,lon:lon})}).then(r=>r.json()).then(d=>{if(d.ok){document.getElementById('msg').innerText='✅ Attendance Marked!';document.getElementById('msg').style.color='green';}else{document.getElementById('msg').innerText='❌ Failed';}});
+}
+</script></body></html>
