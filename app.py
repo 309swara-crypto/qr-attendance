@@ -189,13 +189,22 @@ def sl():
     return render_template('student_list.html', students=d)
 
 @app.route('/view_attendance')
-def vl():
-    try:
-        conn=get_db(); cur=conn.cursor(); cur.execute("SELECT roll,name,class,subject,time,status,distance FROM attendance ORDER BY id DESC"); d=cur.fetchall(); cur.close(); conn.close()
-    except:
-        d=[]
-    return render_template('view_attendance.html', attendance=d)
-
+def view_attendance():
+    con = get_db()
+    cur = con.cursor()
+    teacher = session.get('teacher')
+    student_roll = session.get('roll')
+    # Teacher is there so only there attendance
+    if teacher:
+        cur.execute("SELECT roll,name,class,subject,time,status,distance,ip FROM attendance WHERE LOWER(subject)=LOWER(%s) ORDER BY id DESC", (teacher,))
+    # Student hai toh sirf uski apni attendance
+    elif student_roll:
+        cur.execute("SELECT roll,name,class,subject,time,status,distance,ip FROM attendance WHERE roll=%s ORDER BY id DESC", (student_roll,))
+    else:
+        cur.execute("SELECT roll,name,class,subject,time,status,distance,ip FROM attendance ORDER BY id DESC")
+    attendance = cur.fetchall()
+    con.close()
+    return render_template("view_attendance.html", attendance=attendance)
 @app.route('/download_attendance')
 def dl1():
     try:
