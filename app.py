@@ -142,7 +142,7 @@ def verify():
     if not info:
         return "QR Expired <a href='/student'>Back</a>"
     d=dist_m(info['lat'],info['lon'],lat,lon)
-    st="PRESENT" if d<=500 else "ABSENT"
+    st="PRESENT" if d<=100 else "ABSENT"
     try:
         conn=get_db(); cur=conn.cursor()
         cur.execute("SELECT id FROM attendance WHERE roll=%s AND qr_id=%s", (session.get('roll'),qid))
