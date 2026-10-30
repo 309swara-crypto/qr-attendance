@@ -2,28 +2,28 @@
 <html><head><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Login</title>
 <style>
-body{font-family:Arial;background:linear-gradient(135deg,#2a4dd0,#1e3c9a);min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:15px}
-.card{background:white;padding:25px;border-radius:16px;width:100%;max-width:360px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
-input,select{width:100%;padding:12px;margin:7px 0;border-radius:8px;border:1px solid #d0d7de;background:#eef2ff;box-sizing:border-box}
-button{width:100%;padding:12px;margin:7px 0;border-radius:8px;border:none;font-weight:bold;cursor:pointer}
-.blue{background:#1a56ff;color:white} .light{background:#e8eefc;color:#333}
+body{font-family:Arial;background:linear-gradient(135deg,#7C3AED,#DB2777,#F97316);min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:15px}
+.card{background:white;padding:20px 18px;border-radius:14px;width:100%;max-width:380px;box-shadow:0 20px 40px rgba(0,0,0,0.25)}
+input,select{width:100%;padding:10px;margin:7px 0 12px 0;border:1px solid #e5e7eb;background:#F9FAFB;box-sizing:border-box;border-radius:8px}
+button{width:100%;padding:11px;margin:7px 0;border-radius:8px;border:none;font-weight:bold;cursor:pointer}
+.blue{background:linear-gradient(90deg,#7C3AED,#DB2777);color:white;box-shadow:0 4px 15px rgba(219,39,119,0.4)} .light{background:#F3F4F6;color:#333}
 .small{font-size:11px;text-align:center;color:#666;margin-top:8px}
-h2{text-align:center;margin:0 0 15px 0}
+h2{text-align:center;margin:0 0 16px 0;font-size:22px;color:#111}
 </style></head>
 <body>
 <div class="card">
-<h2>📚 QR Attendance</h2>
-<form action="/unified_login" method="POST">
+<h2>📷 QR Attendance</h2>
+<form action="/unified-login" method="POST">
 <label style="font-size:12px">Select Role</label>
-<select name="role"><option value="Student">👨‍🎓 Student</option><option value="Teacher">👨‍🏫 Teacher</option></select>
+<select name="role"><option value="Student">👨‍🎓 Student</option><option value="Teacher">👩‍🏫 Teacher</option></select>
 <label style="font-size:12px">ID / Roll No</label>
-<input name="id_roll" value="1" placeholder="Enter ID or Roll" required>
+<input name="id_roll" value="1" placeholder="Enter ID or Roll No" required>
 <label style="font-size:12px">Password</label>
-<input name="password" type="password" value="1" placeholder="Password = same as Roll" required>
+<input name="password" type="password" value="1" placeholder="Password - same as Roll" required>
 <button class="blue">Login with ID</button>
 </form>
 <p class="small">OR USE GOOGLE - SELF REGISTER</p>
-<a href="/login"><button class="light">G Student - Register with Google</button></a>
-<p class="small">Teacher IDs: dbms/dbms123, stqa, maths<br>Student: Roll 1 / Pass 1 after manual add</p>
+<a href="/auth/google"><button class="light" type="button">Student - Register with Google</button></a>
+<p class="small">Teacher? <a href="/teacher-login">Click here</a> to login manually. | <a href="/register">Register</a> for manual admission | <a href="/forgot">Forgot</a> | <a href="/verify">Verify</a> | Roll 1 / Pass 1 after manual</p>
 </div>
 </body></html>
