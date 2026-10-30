@@ -123,7 +123,7 @@ def gen_qr():
     t_lat = float(request.args.get('lat') or 18.5204)
     t_lon = float(request.args.get('lon') or 73.8567)
     qid=datetime.now().strftime("%Y%m%d%H%M%S")
-    qr_store[qid]={"subject":sub,"lat":t_lat,"lon":t_lon,"expiry":datetime.now()+timedelta(minutes=10)}
+    qr_store[qid]={"subject":sub,"lat":t_lat,"lon":t_lon,"expiry":datetime.now()+timedelta(minutes=3)}
     print(f"QR {qid} created at {t_lat},{t_lon} by {sub}")
     link=f"{request.host_url}scan/{qid}"; img=qrcode.make(link); b=io.BytesIO(); img.save(b,'PNG'); b.seek(0); b64=base64.b64encode(b.getvalue()).decode()
     return render_template('generate_qr.html', subject=sub, qr_b64=b64, qr_link=link, t_lat=t_lat, t_lon=t_lon)
