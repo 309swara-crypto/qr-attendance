@@ -11,8 +11,8 @@ body{font-family:Arial;background:#f0f3ff;margin:0;padding:15px;text-align:cente
 <body>
 <div class="card">
 <h2>Subject: {{subject}}</h2>
-<div id="timer">10:00</div>
-<p style="font-size:12px;color:#666">QR expires in 10 minutes - Students must scan within 50m</p>
+<div id="timer">3:00</div>
+<p style="font-size:12px;color:#666">QR expires in 3 minutes - Students must scan within 100m</p>
 <div class="qr-box">
 <img src="data:image/png;base64,{{qr_b64}}" style="width:250px;height:250px">
 </div>
@@ -22,7 +22,7 @@ body{font-family:Arial;background:#f0f3ff;margin:0;padding:15px;text-align:cente
 </div>
 
 <script>
-let time = 600; // 10 minutes
+let time = 180; // 3 minutes
 let timerEl = document.getElementById("timer");
 let interval = setInterval(()=>{
   let m = Math.floor(time/60);
