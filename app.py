@@ -65,7 +65,7 @@ def add_manual():
     if not roll or not name:
         return "Roll Name required <a href='/teacher'>Back</a>"
     try:
-        conn=get_db(); cur=conn.cursor
+        conn=get_db(); cur=conn.cursor()
         cur.execute("SELECT roll FROM students WHERE roll=%s", (roll,))
         if cur.fetchone():
             cur.close(); conn.close()
