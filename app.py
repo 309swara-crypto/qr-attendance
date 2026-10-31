@@ -66,7 +66,7 @@ def add_manual():
         return "Roll Name required <a href='/teacher'>Back</a>"
     try:
         conn=get_db(); cur=conn.cursor
-               cur.execute("SELECT roll FROM students WHERE roll=%s", (roll,))
+        cur.execute("SELECT roll FROM students WHERE roll=%s", (roll,))
         if cur.fetchone():
             cur.close(); conn.close()
             return "Roll No already exists! <a href='/teacher'>Back</a>"
