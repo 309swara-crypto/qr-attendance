@@ -1,6 +1,7 @@
 <!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">
 <style>body{font-family:Arial;background:#f0f3ff;padding:15px}table{width:100%;background:white;border-collapse:collapse;font-size:12px;border-radius:10px;overflow:hidden}th{background:#1a3cd4;color:white;padding:8px}td{padding:8px;border-bottom:1px solid #eee}</style></head>
 <body><h3>👥 All Students ({{students|length}})</h3>
+  <button onclick="downloadCSV()" style="background:green;color:white;padding:8px 15px;border:none;border-radius:5px;">Download CSV</button>
 <table><tr><th>Roll</th><th>Name</th><th>Email</th><th>Class</th></tr>
 {% for s in students %}<tr><td>{{s[0]}}</td><td>{{s[1]}}</td><td>{{s[2]}}</td><td>{{s[3]}}</td></tr>{% endfor %}
-</table><br><a href="/teacher">← Back</a></body></html>
+</table><br><a href="/teacher">← Back</a> <script>function downloadCSV(){let t=document.querySelector("table");let r=t.querySelectorAll("tr");let c="";r.forEach(row=>{let d=[];row.querySelectorAll("th, td").forEach(col=>d.push(col.innerText));c+=d.join(",")+"\n";});let b=new Blob([c],{type:"text/csv"});let a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="students.csv";a.click();}</script></body></html>
