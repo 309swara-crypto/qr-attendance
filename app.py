@@ -209,6 +209,12 @@ def dl1():
 @app.route('/logout')
 def logout():
     session.clear(); return redirect('/')
-
+@app.route('/delete_student/<cls>/<roll>')
+def delete_student(cls, roll):
+    try:
+        conn=get_db(); cur=conn.cursor(); cur.execute("DELETE FROM students WHERE class=%s AND roll=%s",(cls,roll)); conn.commit(); conn.close()
+    except Exception as e:
+        print(e)
+    return redirect(request.referrer or '/')
 if __name__=='__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT',5000)))
