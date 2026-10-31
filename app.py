@@ -66,8 +66,10 @@ def add_manual():
         return "Roll Name required <a href='/teacher'>Back</a>"
     try:
         conn=get_db(); cur=conn.cursor()
-        cur.execute("DELETE FROM students WHERE roll=%s", (roll,))
-        conn.commit()
+       cur.execute("SELECT roll FROM students WHERE roll=%s", (roll,))
+if cur.fetchone():
+    cur.close(); conn.close()
+    return "Roll No already exists! <a href='/teacher'>Back</a>"
         cur.execute("INSERT INTO students (roll,name,email,class,password) VALUES (%s,%s,%s,%s,%s)", (roll,name,f"{roll}@manual.com",class_name,roll))
         conn.commit(); cur.close(); conn.close()
     except Exception as e:
