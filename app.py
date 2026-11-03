@@ -214,46 +214,15 @@ def delete_student(roll):
     try:
         import urllib.parse
         roll = urllib.parse.unquote(roll).strip()
-        print("DELETE TRY FOR:", roll)
         conn = get_db(); cur = conn.cursor()
-        # Pehle pata karo table me column ke naam kya hai
-        try:
-            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='students'")
-            cols = [r[0] for r in cur.fetchall()]
-        except:
-            try:
-                conn.rollback()
-                cur.execute("PRAGMA table_info(students)")
-                cols = [r[1] for r in cur.fetchall()]
-            except:
-                cols = ['email','name','roll','class']
-        print("COLUMNS:", cols)
-        # Har column me try karo, %s aur ? dono se
-        for col in cols:
-            for q in [f"DELETE FROM students WHERE {col}=%s", f"DELETE FROM students WHERE {col}=?"]:
-                try:
-                    cur.execute(q, (roll,))
-                    conn.commit()
-                except:
-                    try: conn.rollback()
-                    except: pass
-        conn.close()
+        # Pehle attendance udao
+        try: cur.execute("DELETE FROM attendance WHERE roll::text=%s OR name=%s OR email=%s", (roll, roll, roll))
+        except: conn.rollback()
+        # Fir student udao - roll ko text bana ke compare karo
+        cur.execute("DELETE FROM students WHERE name=%s OR email=%s OR roll::text=%s OR class=%s", (roll, roll, roll, roll))
+        conn.commit(); conn.close()
     except Exception as e:
         print("DELETE ERROR:", e)
     return redirect(request.referrer or '/')
-@app.route('/kill_sophia')
-def kill_sophia():
-    try:
-        conn = get_db(); cur = conn.cursor()
-        cur.execute("SELECT * FROM students")
-        all_rows = cur.fetchall()
-        cur.execute("DELETE FROM students WHERE name ILIKE '%sophia%'")
-        conn.commit()
-        cur.execute("SELECT * FROM students")
-        left = cur.fetchall()
-        conn.close()
-        return f"PEHLE THE: {len(all_rows)} rows<br>AB BACHE: {len(left)} rows<br>ALL DATA: {all_rows}"
-    except Exception as e:
-        return f"ERROR: {e}"
 if __name__=='__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT',5000)))
