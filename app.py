@@ -209,10 +209,10 @@ def dl1():
 @app.route('/logout')
 def logout():
     session.clear(); return redirect('/')
-@app.route('/delete_student/<cls>/<roll>')
-def delete_student(cls, roll):
+@app.route('/delete_student/<roll>')
+def delete_student(roll):
     try:
-        conn=get_db(); cur=conn.cursor(); cur.execute("DELETE FROM students WHERE class=%s AND roll=%s",(cls,roll)); conn.commit(); conn.close()
+        conn=get_db(); cur=conn.cursor(); cur.execute("DELETE FROM students WHERE class=%s AND roll=%s",(roll, )); conn.commit(); conn.close()
     except Exception as e:
         print(e)
     return redirect(request.referrer or '/')
