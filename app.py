@@ -215,22 +215,20 @@ def delete_student(roll):
         import urllib.parse
         roll = urllib.parse.unquote(roll).strip()
         conn = get_db(); cur = conn.cursor()
-        # Pehle attendance udao
-        try: cur.execute("DELETE FROM attendance WHERE roll::text=%s OR name=%s OR email=%s", (roll, roll, roll))
-        except: conn.rollback()
-        # Fir student udao - roll ko text bana ke compare karo
-        cur.execute("DELETE FROM students WHERE name=%s OR email=%s OR roll::text=%s OR class=%s", (roll, roll, roll, roll))
+        try:
+            cur.execute("DELETE FROM attendance WHERE roll::text=%s OR name=%s", (roll, roll))
+        except:
+            pass
+        cur.execute("DELETE FROM students WHERE name=%s OR roll::text=%s OR email=%s", (roll, roll, roll))
         conn.commit(); conn.close()
     except Exception as e:
-        print("DELETE ERROR:", e)
+        print(e)
     return redirect(request.referrer or '/')
-    @app.route('/fix-sophia')
+
+@app.route('/fix-sophia')
 def fix_sophia():
-    conn=get_db(); cur=conn.cursor()
-    try:
-        cur.execute("DELETE FROM attendance WHERE name ILIKE '%sophia%' OR roll::text ILIKE '%sophia%'")
-    except:
-        pass
+    conn = get_db(); cur = conn.cursor()
+    cur.execute("DELETE FROM attendance WHERE name ILIKE '%sophia%' OR roll::text ILIKE '%sophia%'")
     cur.execute("DELETE FROM students WHERE name ILIKE '%sophia%' OR roll::text ILIKE '%sophia%' OR email ILIKE '%sophia%'")
     conn.commit(); conn.close()
     return "Sophia deleted, ab list check kar"
