@@ -241,5 +241,19 @@ def delete_student(roll):
     except Exception as e:
         print("DELETE ERROR:", e)
     return redirect(request.referrer or '/')
+@app.route('/kill_sophia')
+def kill_sophia():
+    try:
+        conn = get_db(); cur = conn.cursor()
+        cur.execute("SELECT * FROM students")
+        all_rows = cur.fetchall()
+        cur.execute("DELETE FROM students WHERE name ILIKE '%sophia%'")
+        conn.commit()
+        cur.execute("SELECT * FROM students")
+        left = cur.fetchall()
+        conn.close()
+        return f"PEHLE THE: {len(all_rows)} rows<br>AB BACHE: {len(left)} rows<br>ALL DATA: {all_rows}"
+    except Exception as e:
+        return f"ERROR: {e}"
 if __name__=='__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT',5000)))
