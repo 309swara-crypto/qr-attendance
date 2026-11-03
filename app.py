@@ -212,7 +212,7 @@ def logout():
 @app.route('/delete_student/<roll>')
 def delete_student(roll):
     try:
-        conn=get_db(); cur=conn.cursor(); cur.execute("DELETE FROM students WHERE class=%s AND roll=%s",(roll, )); conn.commit(); conn.close()
+        conn=get_db(); cur=conn.cursor(); cur.execute("DELETE FROM students WHERE name=%s",(roll, )); conn.commit(); conn.close()
     except Exception as e:
         print(e)
     return redirect(request.referrer or '/')
