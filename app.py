@@ -209,12 +209,37 @@ def dl1():
 @app.route('/logout')
 def logout():
     session.clear(); return redirect('/')
-@app.route('/delete_student/<roll>')
+@app.route('/delete_student/<path:roll>')
 def delete_student(roll):
     try:
-        conn=get_db(); cur=conn.cursor(); cur.execute("DELETE FROM students WHERE name=%s",(roll, )); conn.commit(); conn.close()
+        import urllib.parse
+        roll = urllib.parse.unquote(roll).strip()
+        print("DELETE TRY FOR:", roll)
+        conn = get_db(); cur = conn.cursor()
+        # Pehle pata karo table me column ke naam kya hai
+        try:
+            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='students'")
+            cols = [r[0] for r in cur.fetchall()]
+        except:
+            try:
+                conn.rollback()
+                cur.execute("PRAGMA table_info(students)")
+                cols = [r[1] for r in cur.fetchall()]
+            except:
+                cols = ['email','name','roll','class']
+        print("COLUMNS:", cols)
+        # Har column me try karo, %s aur ? dono se
+        for col in cols:
+            for q in [f"DELETE FROM students WHERE {col}=%s", f"DELETE FROM students WHERE {col}=?"]:
+                try:
+                    cur.execute(q, (roll,))
+                    conn.commit()
+                except:
+                    try: conn.rollback()
+                    except: pass
+        conn.close()
     except Exception as e:
-        print(e)
+        print("DELETE ERROR:", e)
     return redirect(request.referrer or '/')
 if __name__=='__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT',5000)))
