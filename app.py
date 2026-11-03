@@ -224,5 +224,15 @@ def delete_student(roll):
     except Exception as e:
         print("DELETE ERROR:", e)
     return redirect(request.referrer or '/')
+    @app.route('/fix-sophia')
+def fix_sophia():
+    conn=get_db(); cur=conn.cursor()
+    try:
+        cur.execute("DELETE FROM attendance WHERE name ILIKE '%sophia%' OR roll::text ILIKE '%sophia%'")
+    except:
+        pass
+    cur.execute("DELETE FROM students WHERE name ILIKE '%sophia%' OR roll::text ILIKE '%sophia%' OR email ILIKE '%sophia%'")
+    conn.commit(); conn.close()
+    return "Sophia deleted, ab list check kar"
 if __name__=='__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT',5000)))
